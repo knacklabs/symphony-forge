@@ -686,12 +686,19 @@ A repo pinned to a release older than the command upgrades once with
 
 For Forge's maintainers:
 
+Cut one release a day at 05:00 UTC from the newest main commit whose Linux full run
+and Windows run passed. Freeze the contents at the cut. Only a fix without which the
+release is unsafe or its checks cannot pass may join; later work waits for the next day.
+Publish within 30 minutes of the cut, without a separate owner yes.
+Skip the day when nothing merged since the last release or main is red.
+
 1. In a fix, set `__version__` in `src/forge/__init__.py` to the new version (without the `v`),
    close it and merge it.
-2. Start one Linux full run with `gh workflow run forge.yml --ref main`.
-   Confirm it is green. This workflow posts the full-run status that sign-off and release read.
-   Start the Windows platform run with `gh workflow run forge-next.yml --ref main`.
-   Confirm it is green before you tag the release.
+2. Reuse the cut commit's passed nightly Linux full run and Windows run when both already
+   passed on that commit. If either is missing, while main still points to that commit,
+   start that run with `gh workflow run forge.yml --ref main` (Linux) or
+   `gh workflow run forge-next.yml --ref main` (Windows) and confirm it is green.
+   The Linux workflow posts the full-run status that sign-off and release read.
 3. Tag the merge commit `vX.Y.Z` and push the tag: `git tag vX.Y.Z <merge commit>`, then
    `git push origin vX.Y.Z`. Check the tag's tree matches the default branch with
    `git diff --quiet vX.Y.Z origin/main`.
