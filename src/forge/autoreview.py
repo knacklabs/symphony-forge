@@ -14,6 +14,21 @@ from forge import machine, repo, score
 
 PRIORITIES = ("P0", "P1", "P2", "P3")
 TOKENS = ("input_tokens", "cached_input_tokens", "output_tokens", "reasoning_output_tokens")
+REPAIR_FOLLOWUP = "Follow-up: new finding below P0 in a repair review"
+
+
+def repair_findings(findings: list[dict[str, Any]], previous: dict[str, Any]) -> None:
+    """Keep repair reviews on earlier findings, new P0s and mandatory gates."""
+    if not previous.get("commit"):
+        return
+    earlier = {score.identity(f["file"], f["title"]) for f in previous.get("findings", [])}
+    for finding in findings:
+        title = re.sub(r"^\[P[0-3]\]\s*", "", finding["title"].strip())
+        if (score.identity(finding["file"], finding["title"]) not in earlier
+                and score.priority(finding) != "P0"
+                and not score.MUST.match(title)
+                and not re.match(r"Gate\s*:", title, re.I)):
+            finding["follow_up"] = REPAIR_FOLLOWUP
 
 
 def spent(folder: Path) -> dict[str, Any]:

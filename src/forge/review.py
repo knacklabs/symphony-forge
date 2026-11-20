@@ -1051,6 +1051,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 and score.priority(finding) >= ceiling.get(key, "")
                 and not (settlement.startswith("dismissed because ") and _cited_changed(top, history, key, head))])
             if not signoff_prompt:
+                autoreview.repair_findings(findings, previous or (history[-1] if history else {}))
                 bound_review(top, item, state, result)
         serious = blocking(result)
         identity = repo.record_event(top, item, "review result", commit=head,
@@ -1097,7 +1098,7 @@ def bound_review(top: Path, item: str, state: dict[str, Any], result: dict[str, 
             item and noise.sentence(missed[1]).startswith(item) for item in approved))
         must = score.MUST.match(title)
         raised = missed and any(p.search(finding["body"]) for p, _ in score.FLOORS[:2])
-        if approved_missed or raised or (must and must[1].strip().casefold() in kinds):
+        if (approved_missed or raised or (must and must[1].strip().casefold() in kinds)) and finding.get("follow_up") != autoreview.REPAIR_FOLLOWUP:
             if not finding.get("required_done_when") or not str(finding.get("follow_up") or "Split into").startswith("Split into"):
                 finding["required_done_when"] = True
                 finding.pop("follow_up", None)
