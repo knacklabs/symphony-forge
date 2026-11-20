@@ -1,0 +1,59 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/autoreview.py\tGate: proof list omits linguist-generated files\treview-skips-deleted-content",
+      "kind": "bug",
+      "path": "src/forge/autoreview.py",
+      "line": 34,
+      "text": "Gate: proof list omits linguist-generated files",
+      "from": "blocking",
+      "item": "review-skips-deleted-content",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/autoreview.py\tNot done: Restoring a deleted file hides new files beneath its former path\treview-skips-deleted-content",
+      "kind": "bug",
+      "path": "src/forge/autoreview.py",
+      "line": 54,
+      "text": "Not done: Restoring a deleted file hides new files beneath its former path",
+      "from": "blocking",
+      "item": "review-skips-deleted-content",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: Generated content still reaches the review\treview-skips-deleted-content",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 952,
+      "text": "Not done: Generated content still reaches the review",
+      "from": "blocking",
+      "item": "review-skips-deleted-content",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\ttests/test_review_omits_deleted_and_minified_content.py\tGate: review-input byte-size test fails on Windows\treview-skips-deleted-content",
+      "kind": "bug",
+      "path": "tests/test_review_omits_deleted_and_minified_content.py",
+      "line": 61,
+      "text": "Gate: review-input byte-size test fails on Windows",
+      "from": "blocking",
+      "item": "review-skips-deleted-content",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_review_omits_deleted_and_minified_content.py\tGate: review-input test misses long lines introduced at the head\treview-skips-deleted-content",
+      "kind": "bug",
+      "path": "tests/test_review_omits_deleted_and_minified_content.py",
+      "line": 53,
+      "text": "Gate: review-input test misses long lines introduced at the head",
+      "from": "blocking",
+      "item": "review-skips-deleted-content",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
