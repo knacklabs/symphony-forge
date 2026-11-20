@@ -1,4 +1,5 @@
 {
+  "allow_large": "Owner allowed on 20 Nov 2026: stopping record pushes from cancelling CI touches 6 code files across close's push paths",
   "base": "41c53141ecc53527d8952bc84065e55e6f5ffbe4",
   "branch": "fix/records-cancel-ci",
   "chat": {
@@ -18,7 +19,7 @@
       "gain": 5,
       "harm": 3,
       "line": 67,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -31,7 +32,7 @@
       "gain": 4,
       "harm": 3,
       "line": 134,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -44,7 +45,7 @@
       "gain": 4,
       "harm": 3,
       "line": 153,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -57,7 +58,7 @@
       "gain": 4,
       "harm": 3,
       "line": 67,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -70,7 +71,7 @@
       "gain": 3,
       "harm": 3,
       "line": 55,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -83,7 +84,7 @@
       "gain": 3,
       "harm": 3,
       "line": 214,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -93,80 +94,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "5e05b2259ed79fc176b05c9c1002f8ce49c3fea0ebb5e707c29443e5bcfb859b",
-    "changed": "1579a8070e0e124ccc3f22471df760b4539fd9123098a47c85837a331a7a8cba",
-    "commit": "5da608bd3ea88f04ad04697cd291ae1952d8dc27",
+    "branch_diff": "9e67d158975181a3ca632415c5a2f500e635661aeb257877ac908e0afb83be50",
+    "changed": "8b10207710602bd9782742bdb50920b264d215c73ffbf7de74b017ad8069fa79",
+    "commit": "5d60b50666183e78267a55ffb4d79481c2333b13",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 2, Harm 3\nRaise: Not done - A push whose new commits change only Forge's record files never cancels or restarts a running or queued test run of the same code: close holds its record commits until the checks report (or pushes them with the code), and a record-only push reuses the earlier result; new and existing repos get it on upgrade and forge sync.\nCase: normal use - GitHub has queued a workflow but has not published a job check yet. `_let_finish` discards the missing-check result from `_pending` and returns when its observed states contain no pending job (`src/forge/checks.py:180-183`), so this call pushes the records and cancels the queued run. The repository already models a queued run without a check at `tests/test_close_reruns_cancelled_ci.py:48`; the new push test supplies an already-running check instead. Two other paths bypass the same protection: a net-empty sequence of record commits returns at `checks.py:209`, and an owner-choice push rejected after another machine updates the branch reconciles and pushes again at `src/forge/close.py:880-881` without checking the new remote head.",
-        "file": "src/forge/checks.py",
-        "gain": 5,
-        "harm": 3,
-        "line": 67,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: Wait for the actual queued run before publishing records",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done - A push whose new commits change only Forge's record files never cancels or restarts a running or queued test run of the same code: close holds its record commits until the checks report (or pushes them with the code), and a record-only push reuses the earlier result; new and existing repos get it on upgrade and forge sync.\nCase: normal use - a replacement worker starts a new conversation, makes no code change, and close publishes its records. `src/forge/codex.py:246-251` commits the `chat` field, but it is absent from this bookkeeping set, so the ancestor walk rejects that commit and runs the suite again. The same classifier rejects other Forge records, including `plans/spotted.json` and story-plan records, and rejects record-only merge commits at `src/forge/templates/review-tests.py:111-125`. The new failed-result test populates the listed fields but not these record forms.",
-        "file": "src/forge/templates/review-tests.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 134,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: Reuse results across all record-only commits",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - close is interrupted during its wait, publishes its saved records as the coordinator allowed, and the resulting push cancels the unfinished parent workflow. Once GitHub reports that parent as `cancelled`, this line treats it as a completed test failure, so the new workflow fails its gate without testing the code. A real failed parent has a related recovery problem: rerunning the failed jobs on the record-only head reads the same parent failure and exits again, defeating the existing retry contract at `src/forge/checks.py:485-541` and `src/forge/land.py:232-270`.\nAdds work: run tests when the parent has no completed result or a retry is requested; F 3 x H 2 = 6; 2 x C = 4.",
-        "file": "src/forge/templates/review-tests.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 153,
-        "priority": "P1",
-        "title": "Allow cancelled and retried record-only runs to execute tests",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a review finishes with findings while the code's CI reports a failure. `_pending` raises the red-check refusal, and this `finally` pushes the records but lets the exception escape. Close therefore never reaches its PR update or prints the findings at `src/forge/close.py:444-452`. The same escape from a stuck-record push bypasses the shared PR update and owner question at `close.py:620-622,641-644`. The ruling permits a failure to end the wait; it does not publish the review or question that the caller skipped.",
-        "file": "src/forge/checks.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 67,
-        "priority": "P1",
-        "title": "Publish the review and owner question after a red check ends the wait",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done - A push whose new commits change only Forge's record files never cancels or restarts a running or queued test run of the same code: close holds its record commits until the checks report (or pushes them with the code), and a record-only push reuses the earlier result; new and existing repos get it on upgrade and forge sync.\nCase: normal use - a close with unpushed code has failing local tests and its reviewer refuses. `src/forge/close.py:388-392` saves the failed-test record, but this guard refuses to publish it because the outgoing commits also contain code, leaving the record only on that machine. An early non-exception exit also bypasses the context manager: the binary-fixture refusal returns 1 at `close.py:277-284` after the record save at `close.py:264`. Both miss the coordinator's explicit exit-flush contract.",
-        "file": "src/forge/checks.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 55,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: Flush saved records on early exits with unpushed code",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Gate\nCase: normal use - a coordinator adds the shipped records-only action to a client workflow. The changed action now exits nonzero when the parent failed, so the client's build does not run. The shipped coordinator guidance still says a failed parent produces `false` and the workflow runs normally (`src/forge/templates/skill.md:2496-2498`); the updated worker brief describes the push wait but does not correct this action behavior. Upgrade and sync therefore deliver instructions that describe the opposite result.",
-        "file": "src/forge/templates/review-tests.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 214,
-        "priority": "P1",
-        "title": "Gate: Update the shipped instructions for failed parent runs",
-        "work": 1
-      }
-    ],
-    "id": "08eb558f-ba86-441d-82c9-317805d7b895",
-    "status": "blocked"
+    "findings": [],
+    "id": "963902f2-fdf0-449f-8998-f8ed067debe0",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-20T03:29:36.361890+00:00",
@@ -185,6 +122,10 @@
       "at": "2026-11-20T04:12:01.468967+00:00",
       "round": 2,
       "step": "resume"
+    },
+    {
+      "at": "2026-11-20T05:02:29.578871+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
