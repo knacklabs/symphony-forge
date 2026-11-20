@@ -226,7 +226,7 @@ def handoff_hook(args: Any) -> int:
 
 def _report(top: Path, history: dict[str, Any] | None = None,
             schedules: bool = False, numbers: bool = False,
-            facts: dict[str, Any] | None = None, ready_first: str = "") -> list[str]:
+            facts: dict[str, Any] | None = None) -> list[str]:
     """The lines `forge next` prints."""
     agents = machine.view()["agents"]
     running = sum(run.get("version") == __version__ and run.get("kind") == "work"
@@ -393,11 +393,7 @@ def _report(top: Path, history: dict[str, Any] | None = None,
             and not repo._older(pin.removeprefix("v"), "1.2.43")):
         commands = {line for _, _, line in ready}
         report = [line for line in report if line not in commands]
-        items = [item for _, item, _ in ready]
-        if ready_first in items:
-            items.remove(ready_first)
-            items.insert(0, ready_first)
-        report.insert(ready[0][0], "Next: forge land " + " ".join(items))
+        report.insert(ready[0][0], "Next: forge land " + " ".join(item for _, item, _ in ready))
     return report
 
 

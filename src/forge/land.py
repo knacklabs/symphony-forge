@@ -373,6 +373,30 @@ def _land_all(only: set[str]) -> int:
             codex._unlock(lock)
 
 
+def ready_items(top: Path) -> set[str]:
+    """Active agent-merge items with close evidence at their current head.
+
+    Read close receipts directly: a report can hide tasks during a plan read,
+    and its cached optional checks do not revoke a completed local close.
+    """
+    found = set()
+    main = story.landed_ref(top)
+    for branch, tree in story.worktrees(top).items():
+        entry = None if branch.startswith("story/") else task.branch_item(branch, tree)
+        if not entry:
+            continue
+        item, state = entry
+        state = nextstep.at_ref(top, item, state)
+        if (state.get("status") not in IN_CLOSE or close.merger(tree, state) != "agent"
+                or state.get("stop") and not state["stop"].get("choice")
+                or task._merged(main, item, top)
+                or state.get("stacked_on") and not task._merged(main, state["stacked_on"], top)):
+            continue
+        if nextstep._item_readiness(item, state, tree)[0] == "ready":
+            found.add(item)
+    return found
+
+
 def _queue(top: Path, only: set[str]) -> int:
     """Close and merge every change in close, bases before stacked fixes, otherwise oldest first.
     Run up to the agent places at once. A change
@@ -383,6 +407,7 @@ def _queue(top: Path, only: set[str]) -> int:
     hold = repo.merge_setting(top) == "agent"
     live = {run.get("item") for run in machine.entries() if run.get("repo_root") == top.as_posix()}
     changes, needs, stacked, branches = [], {}, {}, {}
+    ready = ready_items(top)
     prs = {pr.get("headRefName"): pr for pr in board._machine_prs(top)}
     for branch, tree in story.worktrees(top).items():
         found = None if branch.startswith("story/") else task.branch_item(branch, tree)
@@ -416,10 +441,7 @@ def _queue(top: Path, only: set[str]) -> int:
             files = {path for path in repo.git("diff", "--name-only", "-z", "--no-renames",
                                                f"origin/{default}...HEAD", cwd=tree).split("\0")
                      if path and path != spotted.PATH and not path.startswith(".factory/")}
-            pr = prs.get(branch)  # the board's readiness: its checks and pull request, as they are
-            ready = nextstep._item_readiness(item, state, tree, board._checks(
-                pr, repo.config(tree)["checks"])[0], pr=pr)[0] == "ready"
-            changes.append((age, item, files, ready))
+            changes.append((age, item, files, item in ready))
             stacked[item] = state.get("stacked_on")
             branches[item] = branch
     changes.sort()
