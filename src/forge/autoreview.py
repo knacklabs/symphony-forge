@@ -16,6 +16,56 @@ PRIORITIES = ("P0", "P1", "P2", "P3")
 TOKENS = ("input_tokens", "cached_input_tokens", "output_tokens", "reasoning_output_tokens")
 
 
+def hide_generated(tree: Path, start: str, head: str) -> str:
+    """Summarize deletions and generated files in the temporary review tree, without content."""
+    deleted = repo.git("diff", "--name-only", "--diff-filter=D", "-z", "--no-renames",
+                       start, head, cwd=tree).split("\0")
+    deleted = [path for path in deleted if path]
+    counts = {row[2]: row[:2] for record in repo.git(
+        "diff", "--numstat", "--diff-filter=d", "-z", "--no-renames", start, head,
+        cwd=tree).split("\0") if len(row := record.split("\t", 2)) == 3}
+    attrs = repo.run("git", "check-attr", "--stdin", "-z", "linguist-generated", cwd=tree,
+                     input="\0".join(counts)).stdout.split("\0")
+    marked = {path for path, value in zip(attrs[::3], attrs[2::3]) if value in ("set", "true")}
+    generated = []
+    for path, count in counts.items():
+        if path in marked or "-" in count or path.lower().endswith((".map", ".min.js", ".min.css")):
+            generated.append(path)
+            continue
+        # Either side can contain the old minified bundle, even when the new file is readable.
+        for ref in (start, head):
+            blob = repo.run("git", "cat-file", "blob", f"{ref}:{path}", cwd=tree)
+            lines = blob.stdout.splitlines() if blob.returncode == 0 else []
+            if sum(len(line) > 1000 for line in lines) > len(lines) / 2:
+                generated.append(path)
+                break
+    omitted = deleted + generated
+    if not omitted:
+        return ""
+    sizes = {}
+    for ref in (start, head):
+        sizes[ref] = {path: fields[3] for record in repo.git(
+            "ls-tree", "-r", "-l", "-z", ref, cwd=tree).split("\0")
+            if (path := record.partition("\t")[2])
+            and len(fields := record.partition("\t")[0].split()) == 4}
+    # Feed paths on stdin: large folder removals must not exceed Windows' argv limit.
+    repo.run("git", "--literal-pathspecs", "restore", f"--source={start}", "--staged",
+             "--pathspec-from-file=-", "--pathspec-file-nul", cwd=tree,
+             input="\0".join(omitted) + "\0").check_returncode()
+    snapshot = repo.git("commit-tree", repo.git("write-tree", cwd=tree), "-p", head,
+                        "-m", "Branch head without deleted and generated files' contents", cwd=tree)
+    repo.git("checkout", "-q", "-f", "--detach", snapshot, cwd=tree)
+    summaries = [f"deleted: {path} ({sizes[start][path]} bytes)" for path in deleted]
+    summaries += [f"generated: {path} ({sizes[head][path]} bytes)\n"
+                  f"  {path}: {counts[path][0]} added, {counts[path][1]} removed"
+                  for path in generated]
+    return ("\n\n## Generated files\n\nEach listed change is committed at the real branch head with the listed line counts. "
+            "The review tree only restores each file to the branch start to keep its contents out of "
+            "the diff. A missing or untracked copy in the review tree is not a finding. "
+            "Review these files by path and size only; do not read their content:\n"
+            + "\n".join(f"- {line}" for line in summaries))
+
+
 def spent(folder: Path) -> dict[str, Any]:
     """Sum the engine processes' separate streams and keep the first chat."""
     runs: list[dict[str, Any]] = []
