@@ -2157,6 +2157,8 @@ Forge stops and asks the owner.
 From the second review round, close checks the previous round's findings and new P0s that
 happen in normal use. The reviewer says fixed or not fixed for each previous finding.
 Forge records each new finding below P0 as a follow-up in the item's advice.
+This rule applies only after a real blocked model review, never after a skipped review.
+Fixes and story parts keep these follow-ups as advice in every later round.
 It matches earlier findings by title and file. Must and Gate findings keep their usual rules.
 A round-one fix that breaks the main path counts as a P0 (Harm 4 or more). Open findings below
 P0 need the owner's choice at the limit only when no P0 is open, whether their lines changed or not.

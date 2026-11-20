@@ -152,7 +152,7 @@ def note_holds(note: str) -> bool:
 
 def identity(file: Any, title: Any) -> tuple[str, str]:
     title = " ".join(str(title).split()).casefold()
-    return " ".join(str(file).split()).casefold(), re.sub(r"^(?:not fixed:\s*)+", "", title)
+    return " ".join(str(file).split()).casefold(), re.sub(r"^(?:(?:\[p[0-3]\]|not fixed:)\s*)+", "", title)
 
 
 def open_findings(result: dict[str, Any]) -> list[dict[str, Any]]:

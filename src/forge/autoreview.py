@@ -17,14 +17,17 @@ TOKENS = ("input_tokens", "cached_input_tokens", "output_tokens", "reasoning_out
 REPAIR_FOLLOWUP = "Follow-up: new finding below P0 in a repair review"
 
 
-def repair_findings(findings: list[dict[str, Any]], previous: dict[str, Any]) -> None:
+def repair_findings(findings: list[dict[str, Any]], previous: dict[str, Any],
+                    history: list[dict[str, Any]]) -> None:
     """Keep repair reviews on earlier findings, new P0s and mandatory gates."""
-    if not previous.get("commit"):
-        return
+    repair = previous.get("status") == "blocked" and not previous.get("skipped")
     earlier = {score.identity(f["file"], f["title"]) for f in previous.get("findings", [])}
+    followups = {score.identity(f["file"], f["title"]) for old in history
+                 for f in old.get("findings", []) if f.get("follow_up") == REPAIR_FOLLOWUP}
     for finding in findings:
         title = re.sub(r"^\[P[0-3]\]\s*", "", finding["title"].strip())
-        if (score.identity(finding["file"], finding["title"]) not in earlier
+        key = score.identity(finding["file"], finding["title"])
+        if key in followups or (repair and key not in earlier
                 and score.priority(finding) != "P0"
                 and not score.MUST.match(title)
                 and not re.match(r"Gate\s*:", title, re.I)):

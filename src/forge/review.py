@@ -1043,6 +1043,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             findings = [finding for finding in findings if not settled.get(
                 score.identity(finding["file"], finding["title"]), "").startswith("fixed:")]
             if not signoff_prompt:
+                autoreview.repair_findings(findings, previous, history)
                 findings = noise.drop(top, item, findings)
             result.update(findings=findings, dismissals=[
                 {"finding": number, "because": settlement.removeprefix("dismissed because "), "carried": True}
@@ -1051,7 +1052,6 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 and score.priority(finding) >= ceiling.get(key, "")
                 and not (settlement.startswith("dismissed because ") and _cited_changed(top, history, key, head))])
             if not signoff_prompt:
-                autoreview.repair_findings(findings, previous or (history[-1] if history else {}))
                 bound_review(top, item, state, result)
         serious = blocking(result)
         identity = repo.record_event(top, item, "review result", commit=head,
@@ -1091,14 +1091,14 @@ def bound_review(top: Path, item: str, state: dict[str, Any], result: dict[str, 
     settings = repo.review_settings(top)
     kinds = {kind.strip().casefold() for kind in settings.get("always_block", [])}
     minimum = settings.get("added_work_min_gain", 3)
-    for finding in findings:
+    for finding in (f for f in findings if f.get("follow_up") != autoreview.REPAIR_FOLLOWUP):
         title = re.sub(r"^\[P[0-3]\]\s*", "", finding["title"].strip())
         missed = re.match(r"Not done\s*:\s*(.*)", title, re.I)
         approved_missed = missed and ("/" not in item or any(
             item and noise.sentence(missed[1]).startswith(item) for item in approved))
         must = score.MUST.match(title)
         raised = missed and any(p.search(finding["body"]) for p, _ in score.FLOORS[:2])
-        if (approved_missed or raised or (must and must[1].strip().casefold() in kinds)) and finding.get("follow_up") != autoreview.REPAIR_FOLLOWUP:
+        if approved_missed or raised or (must and must[1].strip().casefold() in kinds):
             if not finding.get("required_done_when") or not str(finding.get("follow_up") or "Split into").startswith("Split into"):
                 finding["required_done_when"] = True
                 finding.pop("follow_up", None)
