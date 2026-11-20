@@ -11,8 +11,138 @@
   "done_when": "Close's review input lists a deleted file by path and size only, never its content, and leaves out the content of generated, minified and source-map files (listed by path and size); a fix that deletes a large build folder is reviewed within a normal review's input size; other changes are reviewed as before; new and existing repos get it on upgrade",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "run() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 952,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Generated content still reaches the review",
+      "work": 2
+    },
+    {
+      "area": "hide_generated() in src/forge/autoreview.py",
+      "file": "src/forge/autoreview.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 54,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Restoring a deleted file hides new files beneath its former path",
+      "work": 2
+    },
+    {
+      "area": "hide_generated() in src/forge/autoreview.py",
+      "file": "src/forge/autoreview.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 34,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: proof list omits linguist-generated files",
+      "work": 1
+    },
+    {
+      "area": "test_1_close_summarizes_deleted_and_generated_build_content() in tests/test_review_omits_deleted_and_minified_content.py",
+      "file": "tests/test_review_omits_deleted_and_minified_content.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 53,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: review-input test misses long lines introduced at the head",
+      "work": 1
+    },
+    {
+      "area": "test_1_close_summarizes_deleted_and_generated_build_content() in tests/test_review_omits_deleted_and_minified_content.py",
+      "file": "tests/test_review_omits_deleted_and_minified_content.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 61,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: review-input byte-size test fails on Windows",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "fa1efa1a46119f861de2bbbaa394d213234a50ee8c23d989d379312571143ab8",
+    "changed": "e8d3b28c43bb9f089d93d0bf0ec0f019ea897de76ad16e788a2f3481982c3bce",
+    "commit": "77840c9dfb0e4fcd01cb9bbfdf221b7b84c81803",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a review changes a long-paragraph design document or removes a generated-file attribute while updating the file.\nThe prompt is built before this filter runs: `review.py:336` calls `worker.design_context`, which inserts `PRODUCT.md`, `DESIGN.md`, and an applicable `SCREENS.md` verbatim (`worker.py:750-752`). A document classified as mostly long lines therefore remains in the prompt even though it is removed from the diff. Separately, `autoreview.py:27` checks attributes only at the head. If a change removes a `linguist-generated` rule and updates a short-lined generated file, neither side is filtered and both contents enter the diff. Both paths violate the requirement to leave generated content out of review input and can bring back the usage-limit failure.",
+        "file": "src/forge/review.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 952,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: Generated content still reaches the review",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a developer replaces an extensionless `bin/server` script with a `bin/server/` directory containing new source files.\nThe deleted file's path is passed to `git restore --staged`. That pathspec also matches its new descendants, and the default no-overlay restore removes those descendants from the index because they do not exist at the start. The resulting snapshot omits the new source files from the review, so Close can approve them without reviewing them. Git documents the default removal behavior in [git restore](https://git-scm.com/docs/git-restore).",
+        "file": "src/forge/autoreview.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 54,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: Restoring a deleted file hides new files beneath its former path",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Gate\nCase: normal use - a repository marks generated assets with `linguist-generated`.\nThe proof list names tests for deleted files, filename suffixes, long lines and binary files, but no test for this existing generated-file rule. The named new test never sets the attribute, and the named binary test does not exercise it. Removing the `path in marked` condition would leave those proofs green. The existing boundary test in `tests/test_fix_review_bundles_include_generated_files_s.py` covers marked files but is absent from the proof list.",
+        "file": "src/forge/autoreview.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 34,
+        "priority": "P1",
+        "title": "Gate: proof list omits linguist-generated files",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - a change adds a hashed JavaScript bundle or turns a readable JavaScript file into a minified bundle.\nThe named proof tests a long old version and a file that is long on both sides; its only added generated file is recognized by the `.map` suffix. A broken filter that inspects long lines only at the start would pass this test while sending either head-only bundle in full. The proof list specifically claims additions and both sides of modifications.",
+        "file": "tests/test_review_omits_deleted_and_minified_content.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 53,
+        "priority": "P1",
+        "title": "Gate: review-input test misses long lines introduced at the head",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - running the repository test suite on Windows.\n`write_text` uses the platform's newline translation, so these fixtures are written with CRLF on Windows, while the expected sizes at line 89 are calculated from LF-only strings. The isolated Git fixture has no line-ending normalization, so the committed blobs are larger and the size assertion fails even when the filter reports their correct sizes. Python documents this translation in its [text I/O contract](https://docs.python.org/3.11/library/functions.html#open).",
+        "file": "tests/test_review_omits_deleted_and_minified_content.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 61,
+        "priority": "P1",
+        "title": "Gate: review-input byte-size test fails on Windows",
+        "work": 1
+      }
+    ],
+    "id": "fbd74386-d852-49dc-bbb3-6edf6e030342",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-20T06:56:52.782494+00:00",
@@ -22,6 +152,10 @@
       "at": "2026-11-20T06:59:10.660658+00:00",
       "round": 1,
       "step": "resume"
+    },
+    {
+      "at": "2026-11-20T09:06:04.035299+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
