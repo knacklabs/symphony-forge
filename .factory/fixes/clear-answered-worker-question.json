@@ -18,8 +18,8 @@
       "gain": 4,
       "harm": 3,
       "line": 819,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner chose on 21 Nov 2026: accept as known issues (two questions in one paragraph, a question over 300 characters on another machine, other requested commands); each still clears with one forge work --note round",
       "round": 1,
       "security": false,
       "title": "Preserve unrelated questions in the same worker handoff",
@@ -31,8 +31,8 @@
       "gain": 3,
       "harm": 3,
       "line": 815,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner chose on 21 Nov 2026: accept as known issues (two questions in one paragraph, a question over 300 characters on another machine, other requested commands); each still clears with one forge work --note round",
       "round": 1,
       "security": false,
       "title": "Not done: Other requested commands leave answered questions open",
@@ -44,8 +44,8 @@
       "gain": 3,
       "harm": 3,
       "line": 814,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner chose on 21 Nov 2026: accept as known issues (two questions in one paragraph, a question over 300 characters on another machine, other requested commands); each still clears with one forge work --note round",
       "round": 1,
       "security": false,
       "title": "Not done: Answers are not reconciled across machines",
@@ -83,7 +83,23 @@
     "branch_diff": "7928d2b1be852a7ffbe2c45de1c86a7f3c8f308f05f559962ad1e41dd204cbb9",
     "changed": "ca33e501613d68d35d407b65e622c761cf70572c8570eb891893087fb5c17b5f",
     "commit": "87c9e1200da38680b8d86b54d1e0ffa5722e1856",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner chose on 21 Nov 2026: accept as known issues (two questions in one paragraph, a question over 300 characters on another machine, other requested commands); each still clears with one forge work --note round",
+        "finding": 1
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner chose on 21 Nov 2026: accept as known issues (two questions in one paragraph, a question over 300 characters on another machine, other requested commands); each still clears with one forge work --note round",
+        "finding": 2
+      },
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner chose on 21 Nov 2026: accept as known issues (two questions in one paragraph, a question over 300 characters on another machine, other requested commands); each still clears with one forge work --note round",
+        "finding": 3
+      }
+    ],
     "findings": [
       {
         "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - A worker writes one Question paragraph asking whether it may replace the parser and also asking the coordinator to run `forge fix allow-large` for six files. `owner_choices.py:62-63` treats the whole paragraph as one block and removes it when the allowance command appears anywhere in it. Recording the allowance therefore also removes the unanswered parser decision, so close can proceed without it. The test at `tests/test_answered_worker_question.py:42-43` puts the questions in separately prefixed blocks and misses this case.\nAdds work: retain separately unanswered questions; F 2 x H 2 = 4; 2 x C = 4",
@@ -119,10 +135,10 @@
       }
     ],
     "id": "cdcf2a44-302c-4f0c-8fa2-66b2db813b8f",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-21T13:18:42.684269+00:00",
@@ -150,12 +166,23 @@
       "at": "2026-11-21T13:47:05.105659+00:00",
       "round": 2,
       "step": "hold"
+    },
+    {
+      "at": "2026-11-21T13:48:32.459214+00:00",
+      "by": "owner",
+      "choice": "accept",
+      "round": 2,
+      "step": "owner decision"
     }
   ],
   "stop": {
     "at": "2026-11-21T13:47:05.105659+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "src/forge/task.py",
-    "wait_id": "e86d798a-6467-4048-901f-4e8bc0b1a015"
+    "reason": "Owner chose on 21 Nov 2026: accept as known issues (two questions in one paragraph, a question over 300 characters on another machine, other requested commands); each still clears with one forge work --note round",
+    "wait_id": "e86d798a-6467-4048-901f-4e8bc0b1a015",
+    "worker_round": 2
   },
   "stuck": {
     "close": "ea05a4e2-8379-4b58-b592-46fe6b5f0feb",
