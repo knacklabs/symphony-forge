@@ -26,6 +26,7 @@ from test_setup import _fresh_client
 STORY = "FIX-RECORDS-CANCEL-CI"
 
 
+@pytest.mark.platform
 def test_2_record_only_commit_reuses_failed_ci_without_turning_it_green(
         env, tmp_path, monkeypatch):
     client, initialized = _fresh_client(env.repo, env.gh, tmp_path)
@@ -149,7 +150,7 @@ def _run_workflow_step(script, client, variables):
         if sys.platform == "win32":
             # PATH can select WSL's bash even though WSL has no Linux installed.
             git = Path(subprocess.check_output(
-                ["git", "--exec-path"], text=True, timeout=30).strip()).resolve()
+                ["git", "--exec-path"], encoding="utf-8", timeout=30).strip()).resolve()
             bash = next((str(parent / "bin/bash.exe") for parent in git.parents
                          if (parent / "bin/bash.exe").is_file()), None)
             if bash is None:
@@ -159,6 +160,7 @@ def _run_workflow_step(script, client, variables):
                           text=True, timeout=30)
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("history", [
     "all-records", "pending-ancestor", "merge-second-parent", "business-code",
     "retry-success", "retry-failure", "retry-in-progress",
@@ -379,6 +381,7 @@ def test_9_branch_history_is_read_once_for_docs_and_six_test_groups(env, tmp_pat
     assert "--paginate" not in calls[0]
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("case", ["cancelled", "startup-failure", "retry", "cancelled-action"])
 def test_7_unfinished_or_retried_parent_runs_the_test_suite(
         env, tmp_path, monkeypatch, case):
