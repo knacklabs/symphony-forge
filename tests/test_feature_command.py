@@ -861,11 +861,8 @@ def _assert_feature_guidance(repo, client: Path, log: Path) -> str:
     if repo.git("branch", "--show-current", cwd=client) == "main":
         repo.git("switch", "-qc", "fix/feature-guidance", cwd=client)
     config = client / "forge.toml"
-    # This round proves brief delivery, after the feature checks above. It has
-    # no app edit to test; do not rerun the starter's full container/browser suite.
-    settings = re.sub(r'(?m)^(?:test|fast_test)\s*=.*\n?', "", config.read_text("utf-8"))
     config.write_text(re.sub(r'workers = "[^"]+"', 'workers = "claude"',
-                             'test = ""\nfast_test = ""\n' + settings), "utf-8")
+                             config.read_text("utf-8")), "utf-8")
     repo.git("add", "-A", cwd=client)
     # Fixture history bypasses branch and default-push gates for these two
     # setup commands only. The real fix start and work below keep their hooks.
