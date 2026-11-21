@@ -94,7 +94,7 @@
     "id": "84102149-fcf3-4a52-b010-a1b2f9cf7f91",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -109,13 +109,20 @@
     {
       "at": "2026-11-21T08:42:08.501088+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-21T09:03:13.613790+00:00",
+      "round": 2,
+      "step": "resume"
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "d16cffaee649f72b00aff27e63c1d5337e7ad971",
-    "keys": {},
-    "round": null
+    "close": "6756f0db-d277-480f-ad39-c112f187f3aa",
+    "head": "e6b08e87aa43fd158f27bb2476df06571146c136",
+    "keys": {
+      "the open P0 not done: windows merge after a pin change and the windows workflow in src/forge/repo.py": 1
+    },
+    "round": 1
   },
   "why": "The v1.2.45 release check fails on Windows in two places. First, forge merge run from inside the fix's worktree merges, cannot remove the worktree, then fails with 'git branch failed: not a git repository' (tests/test_merge_refreshes_behind_base.py test_2, all four cases; it passed on v1.2.44). Second, tests/test_record_only_failed_results.py test_9 runs a workflow step with bash, which on the Windows runner is the uninstalled WSL bash.",
   "worker": "codex"
