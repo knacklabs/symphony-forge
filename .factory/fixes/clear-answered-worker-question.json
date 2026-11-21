@@ -1,0 +1,15 @@
+{
+  "base": "bb5484562039300e4d1effcbb8b1e64f116370a2",
+  "branch": "fix/clear-answered-worker-question",
+  "done_when": "Once a worker's question is answered by a forge work --note round or by the step the question asks for (such as forge fix allow-large), close and next no longer report that question",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-21T13:18:42.684269+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "After the coordinator answers a worker's question (for example with forge work --note, or by recording allow-large), the question stays open, so close stops again with 'The worker is waiting for an answer' and needs one more no-change worker round. It happened twice on 21 Nov 2026."
+}
