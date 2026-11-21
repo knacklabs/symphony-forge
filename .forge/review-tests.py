@@ -256,7 +256,7 @@ def test_files(top: Path, base: str, excludes: list[str], *, head: str = "HEAD")
 
 
 def small_change(base: str, excludes: list[str], tests_only: bool) -> bool:
-    """Count code files, keeping shared build and selection inputs on all groups."""
+    """Count selected tests, keeping shared build and selection inputs on all groups."""
     diff = ("git", "diff", "--name-only", "-z", "--no-renames", f"{base}...HEAD")
     changed = run(*diff).split("\0")
     for name in filter(None, changed):
@@ -267,15 +267,22 @@ def small_change(base: str, excludes: list[str], tests_only: bool) -> bool:
                 or re.search(r"(^|[.-])(lock|config)([.-]|$)", path.name)
                 or re.fullmatch(r"requirements.*\.txt|tsconfig.*\.json", path.name)):
             return False
-    code = 0
-    for name in filter(None, run(*diff, "--", ".", *excludes).split("\0")):
-        path = Path(name)
-        if (any(part in {"tests", "test", "__tests__", "spec"} for part in path.parts)
-                or path.name.startswith("test_") or path.name.endswith("_test.py")
-                or re.search(r"\.(test|spec)\.", path.name)):
-            continue
-        code += 1
-    return tests_only or 0 < code <= 5
+    if tests_only:
+        return True
+    try:
+        from forge.fasttest import always_tests, related
+        from forge.quicktest import test_parts
+
+        cfg = tomllib.loads(Path("forge.toml").read_text("utf-8"))
+        if not any(kind == "python" for kind, _, _ in test_parts(Path.cwd(), cfg["test"])):
+            return False
+        picked, tests, shared, _ = related(base)
+        selected = set(picked) | {name.split("::", 1)[0]
+                                  for name in always_tests(Path.cwd(), cfg)}
+        return not shared and bool(tests) and len(selected) * 4 < len(tests)
+    except (ImportError, subprocess.CalledProcessError, ValueError, KeyError, OSError):
+        # The lightweight select job may not have Forge's dependencies installed.
+        return False
 
 
 def reuse() -> bool:

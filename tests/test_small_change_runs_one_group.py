@@ -1,7 +1,7 @@
-"""Small changes use one group; shared inputs keep the full matrix.
+"""Small selections use one group; shared inputs keep the full matrix.
 
 Test-audit: Runs the synced CI script on real commits and evaluates its workflow.
-The existing test-only cases cannot detect code-count or shared-input mistakes.
+The existing test-only cases cannot detect shared-input or fixed-shard mistakes.
 No fake or production seam decides selection.
 Fixed shard counts must keep all groups: the old cases use Forge's pytest split
 and cannot catch omitted shards in a client's own command.
@@ -15,6 +15,7 @@ import sys
 
 import pytest
 
+from conftest import ROOT
 from test_ci_limits_pull_requests_to_linux import expression
 from test_groups_pytest import PYTEST, _branch, _new_client, _settings
 from test_merged_default_branch_pull_requests_run_normal_groups import _commit
@@ -35,6 +36,10 @@ def test_2_a_small_change_runs_one_test_group(repo, gh, tmp_path, fixed_shards, 
               fast_test=fast_test)
     (client / "tests").mkdir(exist_ok=True)
     (client / "tests/test_example.py").write_text("def test_it(): assert True\n", encoding="utf-8")
+    # One touched test stays below a quarter; source-file count no longer matters.
+    for i in range(4):
+        (client / f"tests/test_unrelated_{i}.py").write_text(
+            "def test_it(): assert True\n", encoding="utf-8")
     repo.git("add", "-A", cwd=client)
     repo.git("commit", "-qm", "Set up", cwd=client)
     synced = repo.forge("sync", cwd=client)
@@ -51,7 +56,7 @@ def test_2_a_small_change_runs_one_test_group(repo, gh, tmp_path, fixed_shards, 
     group_output = group_output.replace("steps.docs.outputs.one-group", "github.one_group")
     code = {f"src/file_{i}.py": "VALUE = 1\n" for i in range(6)}
     small = dict(list(code.items())[:3])
-    cases = [(small, [1]), (dict(list(code.items())[:5]), [1]), (code, [1, 2])]
+    cases = [(small, [1]), (dict(list(code.items())[:5]), [1]), (code, [1])]
     for shared in ("pnpm-lock.yaml", "tsconfig.json", "tests/conftest.py",
                    ".forge/review-tests.py", ".github/workflows/other.yml"):
         source = (client / shared).read_text("utf-8") if (client / shared).is_file() else ""
@@ -69,7 +74,8 @@ def test_2_a_small_change_runs_one_test_group(repo, gh, tmp_path, fixed_shards, 
         output = tmp_path / "outputs"
         output.write_text("", encoding="utf-8")
         done = subprocess.run([sys.executable, ".forge/review-tests.py"], cwd=client,
-                              env={**os.environ, "BASE_SHA": base, "HEAD_SHA": head,
+                              env={**os.environ, "PYTHONPATH": str(ROOT / "src"),
+                                   "BASE_SHA": base, "HEAD_SHA": head,
                                    "DOCS_ONLY_EXCLUDES": excludes, "GITHUB_OUTPUT": str(output)},
                               capture_output=True, text=True, timeout=30)
         assert done.returncode == 0, done.stdout + done.stderr
