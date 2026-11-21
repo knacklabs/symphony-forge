@@ -11,7 +11,7 @@
   "done_when": "The one-group choice in review-tests.py uses the size of the selected test set (one group only when the selected tests are a small share of all tests, for example under a quarter, or the selection is small in absolute terms), not the changed-file count, so a small change to a central file runs all configured groups; new and existing repos get it on upgrade and forge sync",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "round": 1,
+  "round": 2,
   "status": "working",
   "steps": [
     {
@@ -21,6 +21,11 @@
     {
       "at": "2026-11-21T02:13:02.675099+00:00",
       "round": 1,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-21T02:14:50.761703+00:00",
+      "round": 2,
       "step": "resume"
     }
   ],
