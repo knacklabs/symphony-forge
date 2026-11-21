@@ -649,9 +649,10 @@ def _settled(history: list[dict[str, Any]]) -> dict[tuple[str, str], str]:
     return {names[key]: reason for key, reason in settled.items()}
 
 
-def _cited_changed(top: Path, history: list[dict[str, Any]], key: tuple[str, str], head: str) -> bool:
-    """Whether git's diff from the commit of the newest own (not carried) dismissal to head touches
-    the line its `file:line` cites; a line only shifted by edits elsewhere counts as unchanged."""
+def _cited_changed(top: Path, history: list[dict[str, Any]], key: tuple[str, str], head: str,
+                   current: dict[str, Any] | None = None) -> bool:
+    """Whether dismissal evidence changed; a current P0 must also match its original location.
+    A line only shifted by edits elsewhere counts as unchanged."""
     cited = None
     for result in history:
         for dismissal in result.get("dismissals", []):
@@ -659,10 +660,13 @@ def _cited_changed(top: Path, history: list[dict[str, Any]], key: tuple[str, str
             where = re.fullmatch(r"(.+):(\d+)", (dismissal["because"].split() or [""])[0])
             if (where and score.identity(finding["file"], finding["title"]) == key
                     and not dismissal.get("accepted") and not dismissal.get("carried")):
-                cited = (result["commit"], where[1], int(where[2]))
+                cited = (result["commit"], where[1], int(where[2]), finding["file"], finding["line"])
     if not cited:
-        return False  # no cited line to compare: the dismissal stands, as before
-    commit, path, number = cited
+        return current is not None  # a P0 needs recorded evidence; legacy dismissals stay as before
+    commit, path, number, file, line = cited
+    if current is not None and (current["file"], current["line"]) != (file, line):
+        return True
+    targets = {(path, number)} | ({(file, line)} if current is not None else set())
     # A Windows checkout can change CRLF to LF without changing the cited evidence.
     diff = repo.run("git", "diff", "--ignore-cr-at-eol", "-U0", "-M", commit, head, cwd=top)
     if diff.returncode:
@@ -673,13 +677,13 @@ def _cited_changed(top: Path, history: list[dict[str, Any]], key: tuple[str, str
             old, header = "", True
         elif header and line.startswith("--- "):
             old = line[6:] if line.startswith("--- a/") else ""
-        elif header and line == "+++ /dev/null" and old == path:
+        elif header and line == "+++ /dev/null" and any(old == path for path, _ in targets):
             return True  # the cited file was deleted
         elif header and line.startswith("@@"):
             header = False
-        if not header and old == path and (hunk := re.match(r"@@ -(\d+)(?:,(\d+))? ", line)):
+        if not header and (hunk := re.match(r"@@ -(\d+)(?:,(\d+))? ", line)):
             first, count = int(hunk[1]), int(hunk[2] or 1)
-            if first <= number < first + count:
+            if any(old == path and first <= number < first + count for path, number in targets):
                 return True
     return False
 
@@ -1047,11 +1051,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                         settled[score.identity(finding["file"], finding["title"])] = accepted_reason
                     elif finding["priority"] == "P0":
                         settled.pop(score.identity(finding["file"], finding["title"]), None)
-            for finding in findings:
-                key = score.identity(finding["file"], finding["title"])
-                if score.holds(finding, "P0"):
-                    settled.pop(key, None)
-            findings = [finding for finding in findings if not settled.get(
+            findings = [finding for finding in findings if score.holds(finding, "P0") or not settled.get(
                 score.identity(finding["file"], finding["title"]), "").startswith("fixed:")]
             if not signoff_prompt:
                 autoreview.repair_findings(findings, previous, history)
@@ -1060,8 +1060,10 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 {"finding": number, "because": settlement.removeprefix("dismissed because "), "carried": True}
                 for number, finding in enumerate(findings, 1)
                 if (settlement := settled.get(key := score.identity(finding["file"], finding["title"]), ""))
-                and score.priority(finding) >= ceiling.get(key, "")
-                and not (settlement.startswith("dismissed because ") and _cited_changed(top, history, key, head))])
+                and (not score.holds(finding, "P0") or settlement.startswith("dismissed because "))
+                and (score.holds(finding, "P0") or score.priority(finding) >= ceiling.get(key, ""))
+                and not (settlement.startswith("dismissed because ") and _cited_changed(
+                    top, history, key, head, finding if score.holds(finding, "P0") else None))])
             if not signoff_prompt:
                 bound_review(top, item, state, result)
         serious = blocking(result)
@@ -1137,7 +1139,8 @@ def bound_review(top: Path, item: str, state: dict[str, Any], result: dict[str, 
             finding["follow_up"] = reason
             changed = True
     kept = [d for d in result.get("dismissals", []) if not (
-        d.get("carried") and score.holds(findings[d["finding"] - 1], "P0") or
+        d.get("carried") and score.holds(findings[d["finding"] - 1], "P0")
+        and d["because"].startswith(("known:", "fixed:", "accepted by the owner:")) or
         not d.get("accepted") and d["because"].startswith("known:") and not d["because"].startswith("known: Split into")
         and (findings[d["finding"] - 1].get("required_done_when")
              or (d["because"].startswith("known: " + score.ADDED_WORK_REASON)
