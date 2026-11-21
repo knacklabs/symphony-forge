@@ -67,6 +67,11 @@ def test_1_vitest_report_and_worker_keep_every_failure(env, adopted, case):
     env.gh.respond("run", "view", stdout=ci_log)
     worked = repo.forge("work", item)
     assert worked.returncode == 0, worked.stdout + worked.stderr
-    brief = calls(log)[-1]["brief"]
+    worker, repair = calls(log)
+    # The first brief must retain CI's failures. A local repair report alone
+    # could hide a broken CI transport now that work runs the test command too.
+    brief = worker["brief"]
     for line in expected:
         assert line in brief, brief
+    assert "The change's related tests failed." in repair["brief"]
+    assert repair["session_id"] == worker["session_id"]

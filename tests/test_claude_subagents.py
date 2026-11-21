@@ -105,19 +105,24 @@ def test_6_claude_builder_gets_haiku_helpers(repo, gh, tmp_path, monkeypatch, sd
     source.write_text("HELP = 'round one'\n", encoding="utf-8")
     (folder / "fail_test.py").write_text(
         "print('intentional failed close test')\nraise SystemExit(1)\n", encoding="utf-8")
-    monkeypatch.setenv("STUB_CLAUDE_COMMIT_FROM", "1")
+    # A repair with no edits must not make the fake attempt an empty commit.
+    repo.git("add", "-A", cwd=folder)
+    repo.git("commit", "-qm", "Prepare the helper retry input", cwd=folder)
     first = repo.forge("work", item)
     assert first.returncode == 0, first.stdout + first.stderr
     failed = env.close(item)
     assert failed.returncode == 1, failed.stdout + failed.stderr
     assert "intentional failed close test" in failed.stdout
-    monkeypatch.delenv("STUB_CLAUDE_COMMIT_FROM", raising=False)
     retry = repo.forge("work", item)
     assert retry.returncode == 0, retry.stdout + retry.stderr
-    [initial, retried] = calls(log)
+    initial, first_repair, retried, second_repair = calls(log)
     expected = budgets["lite" if case == "new-lite-retry" else "build"]
     assert _agent_budgets(initial["options"]["agents"]) == _expected_agents(*expected)
-    assert retried["options"]["agents"] == initial["options"]["agents"]
+    for sent in (first_repair, retried, second_repair):
+        assert sent["options"]["agents"] == initial["options"]["agents"]
+        assert sent["session_id"] == initial["session_id"]
+    for repair in (first_repair, second_repair):
+        assert "intentional failed close test" in repair["brief"]
     assert config.read_bytes() == configured
 
 

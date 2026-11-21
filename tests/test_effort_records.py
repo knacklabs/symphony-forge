@@ -32,18 +32,23 @@ def test_4_round_line_and_run_records_show_effort_and_round(
         monkeypatch.setenv("CODEX_THREAD_ID", "coordinator")
         monkeypatch.delenv("CLAUDECODE", raising=False)
     item = "BOARD/HELP"
-    commit_env = "STUB_CLAUDE_COMMIT_FROM" if family == "claude" else "STUB_CODEX_COMMIT_FROM"
-    monkeypatch.setenv(commit_env, "1")
     (folder / "web").mkdir(exist_ok=True)
     (folder / "web/help.py").write_text("HELP = 'round history'\n", encoding="utf-8")
     (folder / "fail_test.py").write_text(
         "print('intentional round history failure')\nraise SystemExit(1)\n", encoding="utf-8")
+    if family == "claude":
+        # Claude only reports the failure; its repair has no further edit to commit.
+        repo.git("add", "-A", cwd=folder)
+        repo.git("commit", "-qm", "Prepare the round history input", cwd=folder)
+    else:
+        monkeypatch.setenv("STUB_CODEX_COMMIT_FROM", "1")
     first = repo.forge("work", item)
     assert first.returncode == 0, first.stdout + first.stderr
     closed = env.close(item)
     assert closed.returncode == 1, closed.stdout + closed.stderr
     assert "intentional round history failure" in closed.stdout
-    monkeypatch.delenv(commit_env)
+    if family == "codex":
+        monkeypatch.delenv("STUB_CODEX_COMMIT_FROM")
     second = repo.forge("work", item)
     assert second.returncode == 0, second.stdout + second.stderr
     expected = [(1, "low"), (2, "xhigh" if family == "claude" else "high")]
@@ -53,7 +58,9 @@ def test_4_round_line_and_run_records_show_effort_and_round(
               and event.get("event") == "run start" and event.get("kind") in ("work", "worker")]
     turns = [timing for timing in timings if timing.get("item") == item
              and timing.get("step") == "worker round"]
-    assert [(event["round"], event["effort"]) for event in starts] == expected
+    # Both work rounds have one red laptop check and one repair turn.
+    assert [(event["round"], event["effort"]) for event in starts] == [
+        pair for pair in expected for _ in range(2)]
     assert [(timing["round"], timing["effort"]) for timing in turns] == expected
     for source in ("run", "timing", "legacy"):
         if source != "run":

@@ -110,7 +110,8 @@ def test_3_land_reviews_each_changed_round_and_fixes_failing_tests(land):
     assert done.returncode == 0, done.stdout + done.stderr
     assert _steps(done) == [f"Closing {ITEM}.", "Fix round 1 of 1: the worker fixes the failing tests.",
                             f"Closing {ITEM}.", f"Merging {ITEM}."]
-    assert log.read_text("utf-8").splitlines() == ["run", "run"]
+    # Failed close, the worker's passing laptop check, then the final close.
+    assert log.read_text("utf-8").splitlines() == ["run", "run", "run"]
     # Both rounds review their own changed head, rather than waiting for passing tests.
     assert len(env.review_calls()) == 2
     assert "1 passed" in done.stdout
