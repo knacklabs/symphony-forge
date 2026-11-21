@@ -117,7 +117,7 @@
     "id": "2400ac7b-76a6-47c2-8601-39d5ae0b67e5",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -137,13 +137,18 @@
     {
       "at": "2026-11-21T02:28:37.135750+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-21T02:29:09.818923+00:00",
+      "round": 3,
+      "step": "resume"
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "1fc9da5f4f52767b505f56312194104feef55310",
+    "close": "4ecef102-06c9-491a-8d80-f414d528b1ad",
+    "head": "4429a5f85e1d2141a7b616262707c8981de02a45",
     "keys": {},
-    "round": null
+    "round": 2
   },
   "why": "In a repo with several test groups, a change of 5 or fewer code files runs one test group even when it touches a central file and selects most of the suite; a client's story part (5 files including a central module) ran one group, hit the 60-minute limit and was cancelled on every run",
   "worker": "codex"
