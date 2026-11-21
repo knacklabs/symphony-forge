@@ -66,10 +66,14 @@ def test_3_close_test_state_change_reuses_parent_ci(env, tmp_path, monkeypatch,
     monkeypatch.setenv("HEAD_SHA", head)
     monkeypatch.setenv("BASE_SHA", base)
     monkeypatch.setenv("GITHUB_REPOSITORY", "acme/shop")
+    monkeypatch.setenv("GITHUB_EVENT_NAME", "pull_request")
+    monkeypatch.setenv("GITHUB_HEAD_REF", "fix/test-state")
+    monkeypatch.setenv("GITHUB_RUN_ATTEMPT", "1")
     monkeypatch.setenv("GITHUB_WORKFLOW_REF", "acme/shop/.github/workflows/forge.yml@refs/heads/main")
     output = tmp_path / "workflow-output"
     monkeypatch.setenv("GITHUB_OUTPUT", str(output))
-    env.gh.respond("api", "--paginate", "--jq", ".workflow_runs[]", stdout=json.dumps({
+    # Detached merge checkouts get their branch from GitHub's event metadata.
+    env.gh.respond("api", "--jq", ".workflow_runs[]", stdout=json.dumps({
         "id": 1, "head_sha": parent, "status": "completed", "conclusion": "success",
         "event": "pull_request", "pull_requests": [
             {"head": {"sha": parent}, "base": {"sha": base}}]}))

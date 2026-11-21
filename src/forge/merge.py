@@ -156,7 +156,7 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
                         branch_diff=review.fingerprint(head, item, worktree, state, base, branch_diff=True))
                     close._save(worktree, item, state, "Keep the review on the combined change")
                     head = repo.git("rev-parse", "HEAD", cwd=worktree)
-                    close._push(worktree, branch)
+                    checks.push_after_checks(worktree, branch)
                     receipt["commit"] = head
                     _save_ready(path, receipt)
                 else:
