@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: b2928beaa is reverted, tests/test_effort_ladder.py and tests/test_board_tests_after_worker.py pass on main, and nothing else cpp\trevert-laptop-tests",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 367,
+      "text": "Not done: b2928beaa is reverted, tests/test_effort_ladder.py and tests/test_board_tests_after_worker.py pass on main, and nothing else cpp",
+      "from": "blocking",
+      "item": "revert-laptop-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_tests_after_worker.py\tNot done: The board test accepts the review running alongside close's tests while still checking that no build worker is shown and that the\tboard-test-review-row",
+      "kind": "bug",
+      "path": "tests/test_board_tests_after_worker.py",
+      "line": 63,
+      "text": "Not done: The board test accepts the review running alongside close's tests while still checking that no build worker is shown and that the",
+      "from": "blocking",
+      "item": "board-test-review-row",
+      "status": "done",
+      "closed_by": "revert-laptop-tests"
+    },
+    {
+      "key": "bug\ttests/test_board_tests_after_worker.py\tNot done: board test still rejects a review running alongside tests\tboard-test-review-row",
+      "kind": "bug",
+      "path": "tests/test_board_tests_after_worker.py",
+      "line": 54,
+      "text": "Not done: board test still rejects a review running alongside tests",
+      "from": "blocking",
+      "item": "board-test-review-row",
+      "status": "done",
+      "closed_by": "revert-laptop-tests"
+    }
+  ]
+}

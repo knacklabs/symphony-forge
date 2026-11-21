@@ -4,11 +4,52 @@
   "done_when": "b2928beaa is reverted, tests/test_effort_ladder.py and tests/test_board_tests_after_worker.py pass on main, and nothing else changes",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "known": [
+    {
+      "area": "test() in src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 367,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: b2928beaa is reverted, tests/test_effort_ladder.py and tests/test_board_tests_after_worker.py pass on main, and nothing else cpp",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "960a427432934758a3df5b48de9d6bd6cefbe38539510fe076f68e97f79b8fcd",
+    "changed": "46bd16835cfe3a55188be39907f9091d07283b1801995d000192409e405ba334",
+    "commit": "ef6d9e2510aaf5fbccc5d5aaa750129e595140c4",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 1, Harm 3\nRaise: Not done\nCase: normal use - merging the revert through the pull request and main-branch checks.\nThe configured check runs `forge test --change` (.github/workflows/forge.yml:93), and forge.toml:7 routes it through the related-test picker. Neither named regression file is changed, selected through a changed module or test helper, or listed in .forge/always-tests.txt, so the picker at src/forge/fasttest.py:468 does not run either file. The reported 43 laptop passes therefore are not verified by the pull request or main push check; either can pass without testing the regressions this fix must clear. Include both files in the check.",
+        "file": "src/forge/fasttest.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 367,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: b2928beaa is reverted, tests/test_effort_ladder.py and tests/test_board_tests_after_worker.py pass on main, and nothing else cpp",
+        "work": 1
+      }
+    ],
+    "id": "1998bfa8-786b-4ad2-9780-3bc37bd3ac9e",
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-21T02:06:23.634172+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-21T02:16:56.902228+00:00",
+      "step": "review"
     }
   ],
   "why": "Main is red: the laptop-tests-before-push fix (b2928beaa) changes how a work round ends and breaks 13 work-round tests (tests/test_effort_ladder.py, tests/test_board_tests_after_worker.py), which its own related-test CI run did not select; the owner chose on 20 Nov 2026 to revert it for v1.2.45 and bring it back after a proper fix"
