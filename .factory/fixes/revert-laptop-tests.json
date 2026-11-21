@@ -2,6 +2,13 @@
   "base": "36b55e1d116fba825974443fb40f30a4e64232d3",
   "branch": "fix/revert-laptop-tests",
   "done_when": "b2928beaa is reverted, tests/test_effort_ladder.py and tests/test_board_tests_after_worker.py pass on main, and nothing else changes",
+  "drop": {
+    "at": "2026-11-21T02:17:31.576969+00:00",
+    "because": "Owner wants the laptop tests change in v1.2.45; fixing the 13 broken tests forward instead of reverting",
+    "by": "vrknetha <vrknetha@gmail.com> 1795227451 +0530",
+    "pull_request": 1739,
+    "status": "fixing"
+  },
   "fix_kind": "mechanical",
   "kind": "fix",
   "known": [
@@ -41,7 +48,7 @@
     "id": "1998bfa8-786b-4ad2-9780-3bc37bd3ac9e",
     "status": "blocked"
   },
-  "status": "fixing",
+  "status": "dropped",
   "steps": [
     {
       "at": "2026-11-21T02:06:23.634172+00:00",
@@ -50,6 +57,10 @@
     {
       "at": "2026-11-21T02:16:56.902228+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-21T02:17:31.577121+00:00",
+      "step": "drop"
     }
   ],
   "why": "Main is red: the laptop-tests-before-push fix (b2928beaa) changes how a work round ends and breaks 13 work-round tests (tests/test_effort_ladder.py, tests/test_board_tests_after_worker.py), which its own related-test CI run did not select; the owner chose on 20 Nov 2026 to revert it for v1.2.45 and bring it back after a proper fix"
