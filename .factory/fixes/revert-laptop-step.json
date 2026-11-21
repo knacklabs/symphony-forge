@@ -1,0 +1,61 @@
+{
+  "base": "36b55e1d116fba825974443fb40f30a4e64232d3",
+  "branch": "fix/revert-laptop-step",
+  "done_when": "b2928beaa is reverted and nothing else changes",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": ".factory/fixes/laptop-tests-before-push.json",
+      "file": ".factory/fixes/laptop-tests-before-push.json",
+      "gain": 4,
+      "harm": 4,
+      "line": 3,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Data loss: Preserve the reverted fix's records",
+      "work": 1
+    },
+    {
+      "area": "_work() in src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 4,
+      "harm": 1,
+      "line": 390,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: proof list",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "748a995c0b8266105b653d8154156421d08d24eb6cc9d3ab1eafbf484c2f9d3a",
+    "changed": "fc7ae934605693ad060098d8e640e853e68b9756a4771480bc285857b2393648",
+    "commit": "9c4577984ce8c58caec319ef3183eca2c5c64434",
+    "dismissals": [],
+    "findings": [],
+    "id": "bd26f005-c0fe-431e-bd88-5f1066228e3e",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-21T04:02:36.275564+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-21T04:13:15.823519+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-21T04:17:29.001375+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Revert the laptop-tests-before-push change (b2928beaa) for v1.2.45: its after-round test run waits for a test place while holding an agent place, which breaks the machine's waiting lines and many work-round tests; the owner chose on 21 Nov 2026 to release without it and design it properly for v1.2.46"
+}
