@@ -810,10 +810,16 @@ def allow_large(args: argparse.Namespace) -> None:
     if (state.get("stop") or {}).get("predicted_files"):
         repo.record_event(top, name, "owner wait end", wait_id=state["stop"].get("wait_id"))
         del state["stop"]
+    from forge import close, owner_choices
+    answered = owner_choices.answer_command(top, name, state, "forge fix allow-large")
     kind, limit = ("story part", "line limit") if "/" in name else ("fix", "fix limit")
     repo.commit_state(f"Allow the {kind} past the {limit}: {state['allow_large']}",
                       repo.write_state(name, state, top), top=top)
+    if answered:
+        close.share_wait(top, name, state)
     print(f"{kind.capitalize()} {name} may now go over the {limit}.")
+    if answered and unbuilt_fix(name, state, top):
+        print(f"Next: forge work {name}")
 
 
 def require_fix_changes(item: str, state: dict, top: Path, files: list[str]) -> None:
@@ -879,8 +885,12 @@ def amend(args: argparse.Namespace) -> None:
     # The review reads Ruling: lines from the branch's commits, so it drops findings on the old text.
     ruling = (f'Ruling: Done-when changed from "{old}" to '
               f'"{new}" because {args.because.strip()}; judge the new text.')
+    from forge import close, owner_choices
+    answered = owner_choices.answer_command(top, args.item, state, "forge fix amend")
     repo.commit_state(f"Change the fix's done-when\n\n{ruling}",
                       repo.write_state(args.item, state, top), top=top)
+    if answered:
+        close.share_wait(top, args.item, state)
     print(f"Fix {args.item} is now done when: {state['done_when']}")
     command = "work" if unbuilt_fix(args.item, state, top) else "close"
     print(f"Next: forge {command} {args.item}")

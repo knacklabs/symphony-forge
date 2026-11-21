@@ -37,16 +37,41 @@ def require_size(top: Path, state: dict) -> None:
         raise repo.Refused(stop["question"], f'cd {repo.quote(str(top))} && forge fix allow-large "<reason>"')
 
 
-def worker_question(top: Path, item: str, pr: dict) -> str | None:
+def worker_question(top: Path, item: str, pr: dict | None) -> str | None:
     from forge import codex, nextstep
 
+    saved = codex.record(top, item)
+    if pr is None:
+        return saved.get("question")  # No shared answer: keep a failed or interrupted local round's question.
     recorded = nextstep.wait_records(top, item, pr.get("body") or "")
     asked = [event for event in recorded if event["open"] and event.get("event") == "worker question"]
-    saved = codex.record(top, item)
     if asked:
         return asked[-1].get("question")
     return (None if saved.get("question_id") in {event.get("id") for event in recorded if not event["open"]}
             else saved.get("question"))
+
+
+def answer_command(top: Path, item: str, state: dict, command: str) -> bool:
+    """End only the Question blocks answered by this command, here or on another machine."""
+    from forge import close, codex, nextstep, task
+
+    pr = close.branch_pr(top, state) or {}
+    question = worker_question(top, item, pr)
+    if not question:
+        return False
+    blocks = [block.strip() for block in re.split(r"\n(?=Question:)", question)]
+    remaining = [block for block in blocks if not re.search(r"\b" + re.escape(command) + r"\b", block)]
+    if len(remaining) == len(blocks):
+        return False
+    for wait in nextstep.wait_records(top, item, pr.get("body") or ""):
+        if wait["open"] and wait.get("event") == "worker question" and wait.get("question") == question:
+            repo.record_event(top, item, "owner wait end", wait_id=wait["id"])
+    unanswered = "\n\n".join(remaining) or None
+    identity = repo.record_event(top, item, "worker question", question=unanswered) if unanswered else None
+    codex._record(codex._item_file(top, item, ".json", "Build"), question=unanswered, question_id=identity)
+    if task.unbuilt_fix(item, state, top):
+        state["status"] = "started"
+    return True
 
 
 def documents(top: Path, trees: dict[str, Path]) -> list[str]:
