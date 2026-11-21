@@ -1019,6 +1019,9 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 repo.refuse(REFUSALS["failed"], reason=reason, item=item)
         result = {"findings": findings, "blocking_level": "P0" if light else "P1"}
         if not signoff_prompt or item == "client-signoff":
+            def history_priority(finding: dict[str, Any]) -> str:
+                return finding["priority"] if signoff_prompt else score.priority(finding)
+
             history = state["signoff_history"] if signoff_prompt else _history(top, item, base, previous, state=state)
             settled = {score.identity(*key): reason for key, reason in
                        _settled(history).items()}
@@ -1028,7 +1031,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 gone = {d["finding"] for d in old.get("dismissals", [])}
                 for n, e in enumerate(old.get("findings", []), 1):
                     if n in gone or e.get("follow_up") or not score.holds(e):
-                        ceiling[key] = min(ceiling.get(key := score.identity(e["file"], e["title"]), "P9"), score.priority(e))
+                        ceiling[key] = min(ceiling.get(key := score.identity(e["file"], e["title"]), "P9"), history_priority(e))
             if item == "client-signoff":
                 # The owner accepts the limitation in this version of the file,
                 # independent of the next reviewer's wording. Edits reopen it.
@@ -1051,7 +1054,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                         settled[score.identity(finding["file"], finding["title"])] = accepted_reason
                     elif finding["priority"] == "P0":
                         settled.pop(score.identity(finding["file"], finding["title"]), None)
-            findings = [finding for finding in findings if score.holds(finding, "P0") or not settled.get(
+            findings = [finding for finding in findings if history_priority(finding) == "P0" or not settled.get(
                 score.identity(finding["file"], finding["title"]), "").startswith("fixed:")]
             if not signoff_prompt:
                 autoreview.repair_findings(findings, previous, history)
@@ -1060,10 +1063,10 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 {"finding": number, "because": settlement.removeprefix("dismissed because "), "carried": True}
                 for number, finding in enumerate(findings, 1)
                 if (settlement := settled.get(key := score.identity(finding["file"], finding["title"]), ""))
-                and (not score.holds(finding, "P0") or settlement.startswith("dismissed because "))
-                and (score.holds(finding, "P0") or score.priority(finding) >= ceiling.get(key, ""))
+                and (history_priority(finding) != "P0" or settlement.startswith("dismissed because "))
+                and (history_priority(finding) == "P0" or history_priority(finding) >= ceiling.get(key, ""))
                 and not (settlement.startswith("dismissed because ") and _cited_changed(
-                    top, history, key, head, finding if score.holds(finding, "P0") else None))])
+                    top, history, key, head, finding if history_priority(finding) == "P0" else None))])
             if not signoff_prompt:
                 bound_review(top, item, state, result)
         serious = blocking(result)
