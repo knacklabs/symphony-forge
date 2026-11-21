@@ -264,9 +264,6 @@ def test_4_land_recovers_a_conflict_during_merge_check_revalidation(client):
     assert len(env.gh_calls("pr", "merge")) == 1
     assert repo.git("show", "origin/main:default.txt") == "Default update"
     assert len(env.gh_calls(*RUNS)) == 4
-    # This command retries merge after close repairs the conflict. Repeated
-    # admission must reuse the one default-result snapshot, not spend more quota.
-    assert len(env.gh_calls("api", "graphql", "-f", "operationName=ForgeDefaultTests")) == 1
 
 
 def test_5_land_stops_if_github_still_reports_a_conflict_after_close(client):

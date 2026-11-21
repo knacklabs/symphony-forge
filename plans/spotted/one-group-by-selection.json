@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/review-tests.py\tCount only test files belonging to the configured suite\tone-group-by-selection",
+      "kind": "bug",
+      "path": "src/forge/templates/review-tests.py",
+      "line": 107,
+      "text": "Count only test files belonging to the configured suite",
+      "from": "blocking",
+      "item": "one-group-by-selection",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/templates/review-tests.py\tKeep all groups when the PR command runs a wider test set\tone-group-by-selection",
+      "kind": "bug",
+      "path": "src/forge/templates/review-tests.py",
+      "line": 104,
+      "text": "Keep all groups when the PR command runs a wider test set",
+      "from": "blocking",
+      "item": "one-group-by-selection",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/templates/review-tests.py\tNot done: The one-group choice does not reach normal generated CI jobs\tone-group-by-selection",
+      "kind": "bug",
+      "path": "src/forge/templates/review-tests.py",
+      "line": 98,
+      "text": "Not done: The one-group choice does not reach normal generated CI jobs",
+      "from": "blocking",
+      "item": "one-group-by-selection",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\ttests/test_small_change_runs_one_group.py\tGate: selected-group tests do not prove the generated CI behavior\tone-group-by-selection",
+      "kind": "bug",
+      "path": "tests/test_small_change_runs_one_group.py",
+      "line": 59,
+      "text": "Gate: selected-group tests do not prove the generated CI behavior",
+      "from": "blocking",
+      "item": "one-group-by-selection",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

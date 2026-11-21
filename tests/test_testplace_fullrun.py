@@ -24,9 +24,7 @@ from types import SimpleNamespace
 import pytest
 
 from conftest import Repo
-from test_close import env  # noqa: F401
 from test_githooks import hooked
-from test_merge_command import _merge_at_github
 from test_proto_signoff import SOL_HIGH, _client, _decision
 from test_setup import _fresh_client
 from test_testplace_upgrade import prepare_adopted_client
@@ -445,9 +443,11 @@ def test_4_failed_full_run_opens_a_fix(repo, gh, tmp_path, monkeypatch):
 
 
 @pytest.mark.platform
-def test_5_release_and_signoff_wait_for_a_green_full_run(repo, gh, tmp_path, monkeypatch, env):
+def test_5_release_and_signoff_wait_for_a_green_full_run(repo, gh, tmp_path, monkeypatch):
     monkeypatch.delenv("PYTEST_ADDOPTS", raising=False)
-    # Each flow owns its repository; GitHub alone supplies the external status and merge result.
+    # Full-suite statuses still gate releases and sign-off. Task merges now use the
+    # nightly result; test_nightly_result_controls_merges.py owns that separate rule.
+    # Each flow owns its repository; GitHub alone supplies the external status.
     tagged_repo = _adopted_repo(repo, tmp_path / "release-client")
     hooked(tagged_repo)
     main = tagged_repo.git("rev-parse", "origin/main")
@@ -518,26 +518,3 @@ def test_5_release_and_signoff_wait_for_a_green_full_run(repo, gh, tmp_path, mon
     assert refused.returncode != 0
     assert "has no green full test run" in refused.stderr
     assert "forge test --full" in refused.stderr
-
-    settings = (repo.path / "forge.toml").read_text("utf-8")
-    settings = settings.replace('checks = ["tests", "forge-pr-check"]', "checks = []")
-    repo.write("forge.toml", settings + '\ntest_place = "local"\nmerge = "agent"\n')
-    _commit(repo, "Use local change tests", "forge.toml")
-    item, _ = env.start_fix()
-    env.open_pr("")
-    closed = env.close(item)
-    assert closed.returncode == 0, closed.stdout + closed.stderr
-    _set_status(gh, repo.git("rev-parse", "origin/main"), "failure")
-    gh.respond("pr", "view", stdout=json.dumps({
-        "number": 7, "state": "OPEN", "baseRefName": "main", "headRefName": "fix/tidy-readme",
-        "headRefOid": repo.git("rev-parse", "fix/tidy-readme"), "title": "Tidy readme",
-        "isDraft": False, "body": ""}))
-    _merge_at_github(env)
-    merged = repo.forge("merge", item)
-    # Full-run proof still gates releases and sign-off. Done-when 2 now also
-    # stops this ordinary merge while the default branch's newest result is red.
-    assert merged.returncode != 0, merged.stdout + merged.stderr
-    assert not env.gh_calls("pr", "merge")
-    assert "The default branch is red. Forge will wait for a newer green test result." in merged.stdout
-    assert "The default branch is still red. Forge did not merge the pull request." in merged.stderr
-    assert env.gh_calls("api", path=_status_endpoint(repo.git("rev-parse", "origin/main")) + "?per_page=100")

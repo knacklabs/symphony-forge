@@ -179,13 +179,11 @@ class Forge:
         # Historical all-attempt reads have independent snapshots, not live polling queues.
         self.gh.respond("api", "--paginate", "--method", "GET", "--raw-field", "filter=all", stdout=lines(runs))
         self.gh.respond("api", "--paginate", "--jq", ".statuses[]", stdout=lines(statuses or []))
-        # Default-branch admission reads all historical full-run statuses. Ordinary
-        # PR fixtures have no full-run history; red-branch tests supply it explicitly.
+        # Full-run status reads are independent of the pull request's checks.
         self.gh.respond("api", "--paginate", "--jq", ".[]", stdout="")
-        # Default-branch history is independent of the pull request's checks.
-        # Health tests provide results; ordinary PR fixtures have none.
-        self.gh.respond("api", "graphql", "-f", "operationName=ForgeDefaultTests",
-                        stdout=json.dumps({"data": {"repository": {}}}))
+        # Ordinary PR fixtures have no nightly history; gate tests supply it.
+        self.gh.respond("api", "repos/{owner}/{repo}/actions/workflows/forge.yml/runs",
+                        stdout=json.dumps({"workflow_runs": []}))
         # No old queued workflow unless the case supplies one explicitly.
         self.gh.respond("api", "--paginate", "--jq", ".workflow_runs[]", stdout="")
         self.gh.respond("api", "--jq", ".workflow_runs[]", stdout="")

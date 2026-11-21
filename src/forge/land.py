@@ -172,9 +172,10 @@ def land(args: argparse.Namespace) -> int:
             elif close.merger(top, state) != "agent":
                 url = json.loads(close._gh(top, "pr", "view", branch, "--json", "url"))["url"]
                 repo.git("fetch", "-q", "origin", repo.default_branch(top), cwd=top)
-                note = (". The default branch is red. Wait for a newer green test result before you merge."
-                        if merge.red(top, item=item) else "")
-                say(f"{item} is ready; a human merges its pull request: {url}{note}")
+                nightly = merge.red(top, item=item)
+                if nightly:
+                    repo.refuse(merge.REFUSALS["red_default"], run=nightly)
+                say(f"{item} is ready; a human merges its pull request: {url}")
                 return 0
             if hold:
                 _hold()
