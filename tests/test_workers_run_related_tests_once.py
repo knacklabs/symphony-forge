@@ -24,8 +24,8 @@ def test_1_worker_brief_uses_test_place_instructions_without_polling(client):
 @pytest.mark.platform
 @pytest.mark.parametrize("test_place", ["local", "ci"])
 def test_2_worker_test_guidance_follows_the_repo_test_place(repo, monkeypatch, test_place):
-    # Both test places now ask workers to run related tests. CI retains its wider checks.
-    # The stub records Forge's prompt without choosing its content.
+    # forge work owns the prompt contract: local workers run related tests, while CI workers
+    # leave those tests to the pull request. The stub records Forge's prompt without choosing it.
     log = install_claude(repo)
     version = repo.forge("--version").stdout.split()[-1]
     checks = '["tests"]' if test_place == "ci" else "[]"
@@ -55,9 +55,15 @@ def test_2_worker_test_guidance_follows_the_repo_test_place(repo, monkeypatch, t
     assert resumed.returncode == 0, resumed.stdout + resumed.stderr
     continued = " ".join(calls(log)[-1]["brief"].split()).lower()
 
-    guidance = ("run the change's related tests through `forge test` in the foreground once, "
-                "at the end of your turn. wait for it to finish; rerun only what failed.")
-    for brief in (first, nudge, continued):
-        assert guidance in brief
-        if test_place == "ci":
-            assert "ci runs the wider set of checks." in brief
+    if test_place == "ci":
+        guidance = "wider related tests, lint and type checks stay in pull request ci."
+        for brief in (first, nudge, continued):
+            assert guidance in brief
+            assert "previously failing tests" not in brief
+            assert "rerun only what failed" not in brief
+            assert "run the change's related tests through `forge test` in the foreground" not in brief
+    else:
+        guidance = ("run the change's related tests through `forge test` in the foreground once, "
+                    "at the end of your turn. wait for it to finish; rerun only what failed.")
+        for brief in (first, nudge, continued):
+            assert guidance in brief

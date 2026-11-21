@@ -51,8 +51,8 @@ def test_1_the_commit_nudge_and_continued_round_use_the_test_lane(repo, monkeypa
     log = install_claude(repo)
     version = repo.forge("--version").stdout.split()[-1]
     repo.write("forge.toml", f'version = "{version}"\nrepo = "forge-source"\n'
-                             'workers = "claude"\ntest = "echo ok"\n'
-                             'fast_test = "echo ok"\n'
+                             'workers = "claude"\ntest = "pytest -q"\n'
+                             'fast_test = "pytest -q --since {base}"\n'
                              'models.lite = { model = "sonnet", effort = "medium" }\n')
     repo.git("add", "forge.toml")
     repo.git("commit", "--allow-empty", "-q", "-m", "Pin Forge")
@@ -116,15 +116,15 @@ def test_2_clients_receive_related_test_guidance_in_briefs_and_synced_skills(
     built = repo.forge("work", FIX)
     assert built.returncode == 0, built.stdout + built.stderr
     brief = " ".join(calls(log)[0]["brief"].split()).lower()
-    assert "ci runs the wider set of checks." in brief
+    assert "wider related tests, lint and type checks stay in pull request ci." in brief
     assert "previously failing tests" not in brief
     assert "Never edit or delete a test to make it pass".lower() in brief
-    assert "run the change's related tests through `forge test` in the foreground" in brief
+    assert "run the change's related tests through `forge test` in the foreground" not in brief
 
 
 @pytest.mark.parametrize("full,fast", [
-    ("", 'fast_test = "echo {base}"\n'),
-    ('test = ""\n', 'fast_test = "echo {base}"\n'),
+    ("", 'fast_test = "pytest -q --since {base}"\n'),
+    ('test = ""\n', 'fast_test = "pytest -q --since {base}"\n'),
     ("", ""),
 ], ids=["test-absent", "test-empty", "neither-command"])
 def test_3_the_commit_nudge_uses_the_lane_even_without_a_test_command(repo, monkeypatch, full, fast):
