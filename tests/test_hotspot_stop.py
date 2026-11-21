@@ -20,9 +20,11 @@ def saved(where, item):
 
 
 def rounds(env, item, where, paths, title=""):
-    # P1s at the bar now stop for the owner at the review limit.
+    # Keep the same unresolved finding while repairs change these files.
+    defect = {**finding("P1", title or "Round 1 defect", paths[0]),
+              "body": "Gain 4, Work 1, Harm 2\nEvidence for the open defect."}
     for number, path in enumerate(paths, 1):
-        env.reviews(blocked({**finding("P1", title or f"Round {number} defect", path), "body": "Gain 4, Work 1, Harm 2\nEvidence for the open defect."}))
+        env.reviews(blocked(defect))
         env.commit(where, "app.py", f"print({number})\n")
         env.commit(where, path, f"pass  # review round {number}\n")
         result = env.close(item)

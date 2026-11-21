@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any
 
 from forge.close_remote import push_replay, reconcile, replay_baseline, save_replay, squash_replay
-from forge import __version__, app_baseline, checks, codex, design, githooks, init, merge_review, merge_timings, migration_warnings, repo, review, review_skip, score, spotted, story, sync, task, time_records
+from forge import __version__, app_baseline, checks, codex, design, githooks, init, merge_review, merge_timings, migration_warnings, owner_choices, repo, review, review_skip, score, spotted, story, sync, task, time_records
 
 REFUSALS = {
     "not_started": ("Forge has not started {item} in any worktree of this repo.", "forge next"),
@@ -178,7 +178,7 @@ def _close(args: argparse.Namespace, top: Path) -> int:
             print("Recorded the human's choice.")
     if not switch:
         check_stop(item, state, top)
-    question = codex.record(top, item).get("question")
+    question = owner_choices.worker_question(top, item, branch_pr(top, state))
     if question:
         repo.refuse(REFUSALS["question"], item=item, question=question)
     if cfg["test_place"] == "ci" and not cfg["checks"]:

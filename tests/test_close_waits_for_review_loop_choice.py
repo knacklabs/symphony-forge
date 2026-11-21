@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from test_close import CLEAN, ROOT, STORY_DOC, blocked, env, finding  # noqa: F401
+from test_close import CLEAN, ROOT, STORY_DOC, blocked, body, env, finding  # noqa: F401
 from test_fix_reviews_always_run_on_codex_so_a_team_wi import _claude_only
 from test_hotspot_stop import saved, seed
 from test_setup import _fresh_client
@@ -26,7 +26,7 @@ def stopped(env, kind="task"):
     # Both fixes and story parts use the configured two-review limit by default.
     final_round = 2
     for number in range(1, final_round + 1):
-        env.reviews(blocked({**finding("P1", f"Round {number} defect", "src/a.py"),
+        env.reviews(blocked({**finding("P1", "Round 1 defect", "src/a.py"),
                              "body": "Gain 4, Work 1, Harm 2\nNormal saves lose the basket."}))
         env.commit(where, "app.py", f"print({number})\n")
         env.commit(where, "src/a.py", f"pass  # review round {number}\n")
@@ -39,7 +39,7 @@ def stopped(env, kind="task"):
         assert f"Review round {final_round}" in result.stderr and "Forge stopped" in result.stderr
     else:
         assert "reached the round limit with open findings, so Forge stopped." in result.stderr
-    assert f"Round {final_round} defect" in result.stderr
+    assert "Round 1 defect" in result.stderr
     assert "One more round, split or accept?" in result.stderr
     assert (f'Next: forge close {item} --resolve <more|split|accept> '
             '--reason "<human\'s choice>"') in result.stderr
@@ -120,12 +120,22 @@ def test_2_recorded_choice_unlocks_the_item(env, choice):
         assert "The review left serious findings open" in resumed.stderr
     env.commit(where, "src/a.py", "pass  # human choice implemented\n")
     # An accepted finding comes back only as a disputed keep with new evidence of harm.
-    title = "Disputed keep 1: Round 2 defect loses saved baskets" if choice == "accept" else "A new defect"
-    # A new P1 at the bar can stop the next review after an owner choice.
-    env.reviews(blocked({**finding("P1", title, "src/a.py"), "body": "Gain 4, Work 1, Harm 2\nEvidence"}))
+    title = "Disputed keep 1: Round 1 defect loses saved baskets" if choice == "accept" else "A new defect"
+    new_finding = {**finding("P1", title, "src/a.py"), "body": "Gain 4, Work 1, Harm 2\nEvidence"}
+    # More keeps the earlier blocker active; split and accept start from a clean review.
+    if choice == "more":
+        earlier = {**finding("P1", "Round 1 defect", "src/a.py"),
+                   "body": "Gain 4, Work 1, Harm 2\nNormal saves lose the basket."}
+        env.reviews(blocked(earlier, new_finding))
+    else:
+        env.reviews(blocked(new_finding))
     resumed = env.close(item)
     assert resumed.returncode == 1
-    assert title in resumed.stderr
+    if choice == "more":
+        assert "Round 1 defect" in resumed.stderr
+        assert title in body(env.gh_calls("pr", "edit")[-1]).split("Follow-ups:", 1)[1]
+    else:
+        assert title in resumed.stderr
     assert len(env.review_calls()) == before + 1
 
 

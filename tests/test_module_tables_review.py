@@ -102,7 +102,8 @@ def test_3_reviews_and_reads_hold_a_query_on_another_modules_tables(env, tmp_pat
     released = env.close(item)
     assert released.returncode == 0, released.stdout + released.stderr
     published = body(env.gh_calls("pr", "edit")[-1])
-    assert "Later: " + title + " (app.py:1): Gain 2, Work 3, Harm 1" in published
+    assert ("Later: " + title + " (app.py:1): Follow-up: new finding below P0 in a repair review; "
+            "Gain 2, Work 3, Harm 1") in published
 
     # Sign-off uses the same path for both adoption histories. Use the untouched fixture repo.
     if not adopted:

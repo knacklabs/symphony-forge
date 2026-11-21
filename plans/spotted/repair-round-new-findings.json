@@ -1,0 +1,103 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/autoreview.py\tGate: existing review-loop tests still require new P1 findings to block\trepair-round-new-findings",
+      "kind": "bug",
+      "path": "src/forge/autoreview.py",
+      "line": 31,
+      "text": "Gate: existing review-loop tests still require new P1 findings to block",
+      "from": "blocking",
+      "item": "repair-round-new-findings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/autoreview.py\tKeep priority-tagged Not fixed findings blocking\trepair-round-new-findings",
+      "kind": "bug",
+      "path": "src/forge/autoreview.py",
+      "line": 27,
+      "text": "Keep priority-tagged Not fixed findings blocking",
+      "from": "blocking",
+      "item": "repair-round-new-findings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/autoreview.py\t[P1] Do not restore follow-up status to an escalated P0\trepair-round-new-findings",
+      "kind": "bug",
+      "path": "src/forge/autoreview.py",
+      "line": 30,
+      "text": "[P1] Do not restore follow-up status to an escalated P0",
+      "from": "blocking",
+      "item": "repair-round-new-findings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: repair-round Not done follow-ups can block a later review\trepair-round-new-findings",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 1101,
+      "text": "Not done: repair-round Not done follow-ups can block a later review",
+      "from": "blocking",
+      "item": "repair-round-new-findings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tPreserve blocking on the first review after a skipped review\trepair-round-new-findings",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 1054,
+      "text": "Preserve blocking on the first review after a skipped review",
+      "from": "blocking",
+      "item": "repair-round-new-findings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tRecord new Not done findings on story-task guidance\trepair-round-new-findings",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 1054,
+      "text": "Record new Not done findings on story-task guidance",
+      "from": "blocking",
+      "item": "repair-round-new-findings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/score.py\t[P1] Preserve a P0 when a fixed finding recurs with a priority tag\trepair-round-new-findings",
+      "kind": "bug",
+      "path": "src/forge/score.py",
+      "line": 155,
+      "text": "[P1] Preserve a P0 when a fixed finding recurs with a priority tag",
+      "from": "blocking",
+      "item": "repair-round-new-findings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_full_run_starts_before_notes.py\tThe release-guide assertion also fails on the merged default branch.",
+      "kind": "bug",
+      "path": "tests/test_full_run_starts_before_notes.py",
+      "line": 35,
+      "text": "The release-guide assertion also fails on the merged default branch.",
+      "from": "worker",
+      "item": "repair-round-new-findings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_pytest_picker_runs_in_the_clients_environment.py\tThe picker case timed out in the wide run but passed alone and remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_pytest_picker_runs_in_the_clients_environment.py",
+      "line": 161,
+      "text": "The picker case timed out in the wide run but passed alone and remains unresolved.",
+      "from": "worker",
+      "item": "repair-round-new-findings",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

@@ -1,0 +1,229 @@
+{
+  "base": "a291873644fe4943653cb8413469ec21a8704e08",
+  "branch": "fix/repair-round-new-findings",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f723-c939-73d1-9094-b431875e15bd",
+    "head": null,
+    "start": "1c3eff5b81e47c8b93efb6ab8dff4adb151ce49f"
+  },
+  "done_when": "From the second review round on, Forge itself keeps only the previous findings that are still open plus new P0 findings; any other new finding is recorded as a follow-up on the item, shown in close's advice, and does not block the merge; round-one reviews and the owner's choices at the round limit are unchanged; new and existing repos get it on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "run() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 1054,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve blocking on the first review after a skipped review",
+      "work": 2
+    },
+    {
+      "area": "repair_findings() in src/forge/autoreview.py",
+      "file": "src/forge/autoreview.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 27,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep priority-tagged Not fixed findings blocking",
+      "work": 2
+    },
+    {
+      "area": "bound_review() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 1101,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: repair-round Not done follow-ups can block a later review",
+      "work": 2
+    },
+    {
+      "area": "run() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 1054,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Record new Not done findings on story-task guidance",
+      "work": 2
+    },
+    {
+      "area": "repair_findings() in src/forge/autoreview.py",
+      "file": "src/forge/autoreview.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 31,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: existing review-loop tests still require new P1 findings to block",
+      "work": 2
+    },
+    {
+      "area": "repair_findings() in src/forge/autoreview.py",
+      "file": "src/forge/autoreview.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 30,
+      "outcome": "fixed in round 6",
+      "reason": "",
+      "round": 4,
+      "security": false,
+      "title": "[P1] Do not restore follow-up status to an escalated P0",
+      "work": 2
+    },
+    {
+      "area": "identity() in src/forge/score.py",
+      "file": "src/forge/score.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 155,
+      "outcome": "fixed in round 5",
+      "reason": "",
+      "round": 4,
+      "security": false,
+      "title": "[P1] Preserve a P0 when a fixed finding recurs with a priority tag",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "5d27d9442985315bdfeb98cbcde9e0bd1b07562d40a474dff628f3a60d33af82",
+    "changed": "2c9203ff57801a0a28ccc4be9d4f1ede1443e1b91ed72c311ae44c95be9042bd",
+    "commit": "2a121521499a0f5fa351560eae323d1b35a81aae",
+    "dismissals": [],
+    "findings": [],
+    "id": "3b85061d-ee36-42ee-b944-112eafe91546",
+    "status": "clean"
+  },
+  "round": 8,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-20T04:07:50.110997+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-20T04:07:58.913643+00:00",
+      "round": 1,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T04:23:19.791510+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-20T04:24:24.652979+00:00",
+      "round": 2,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T04:52:38.805236+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-20T04:52:38.823113+00:00",
+      "round": 2,
+      "step": "hold"
+    },
+    {
+      "at": "2026-11-20T04:56:25.750055+00:00",
+      "by": "owner",
+      "choice": "more",
+      "round": 2,
+      "step": "owner decision"
+    },
+    {
+      "at": "2026-11-20T04:56:38.903496+00:00",
+      "round": 3,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T05:05:20.975858+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-20T05:59:45.396482+00:00",
+      "round": 4,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T12:37:18.722223+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-20T12:46:51.746232+00:00",
+      "round": 5,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T14:23:51.429290+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-20T14:45:46.521426+00:00",
+      "round": 5,
+      "step": "hold"
+    },
+    {
+      "at": "2026-11-20T14:46:15.374206+00:00",
+      "by": "owner",
+      "choice": "same",
+      "round": 5,
+      "step": "owner decision"
+    },
+    {
+      "at": "2026-11-20T14:47:11.825458+00:00",
+      "round": 6,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T15:03:55.305380+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-21T13:49:40.138707+00:00",
+      "round": 7,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-21T14:00:28.645034+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-21T14:41:08.888548+00:00",
+      "round": 8,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-21T14:48:40.868803+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "8f1019ac-085c-4933-9d8e-07b5b6c390d4",
+    "head": "5d6dd3de3fefd676a6b960d4d98b8c796278d2ef",
+    "keys": {},
+    "round": 7
+  },
+  "why": "Repair-round reviews keep raising new P1 findings in code the repair did not change, although the repair-review prompt (src/forge/templates/review.md, Repair review) allows a new finding only when it is a P0 in normal use; 25 of 38 merged items since 17 Nov 2026 needed 3 or more rounds",
+  "worker": "codex"
+}

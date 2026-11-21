@@ -317,6 +317,10 @@ $delegation
   paragraph starting `Question:` on its own line. Ask plainly and wait for the coordinator's answer.
   Forge records that question on both Codex and Claude and pauses work and close until the
   coordinator answers with `forge work <item> --note "<answer>"`.
+  A recorded size allowance or fix amendment answers the question block that asks for
+  `forge fix allow-large` or `forge fix amend`. Other question blocks stay open.
+  Close and next read shared answers from the pull request. An unbuilt fix resumes with
+  `forge work <item>` after its allowance.
 
 <!-- if coordinator -->
 ## From the coordinator

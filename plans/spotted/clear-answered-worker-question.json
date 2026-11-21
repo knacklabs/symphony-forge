@@ -1,0 +1,59 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/task.py\tNot done: Answers are not reconciled across machines\tclear-answered-worker-question",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 814,
+      "text": "Not done: Answers are not reconciled across machines",
+      "from": "blocking",
+      "item": "clear-answered-worker-question",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/task.py\tNot done: Other requested commands leave answered questions open\tclear-answered-worker-question",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 815,
+      "text": "Not done: Other requested commands leave answered questions open",
+      "from": "blocking",
+      "item": "clear-answered-worker-question",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/task.py\tPreserve unrelated questions in the same worker handoff\tclear-answered-worker-question",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 819,
+      "text": "Preserve unrelated questions in the same worker handoff",
+      "from": "blocking",
+      "item": "clear-answered-worker-question",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/task.py\tResume an unbuilt fix after its size allowance\tclear-answered-worker-question",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 819,
+      "text": "Resume an unbuilt fix after its size allowance",
+      "from": "blocking",
+      "item": "clear-answered-worker-question",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/brief.md\tRemove the nonexistent task allowance command from the brief\tclear-answered-worker-question",
+      "kind": "bug",
+      "path": "src/forge/templates/brief.md",
+      "line": 320,
+      "text": "Remove the nonexistent task allowance command from the brief",
+      "from": "blocking",
+      "item": "clear-answered-worker-question",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
