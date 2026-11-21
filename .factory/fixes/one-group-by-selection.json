@@ -1,0 +1,15 @@
+{
+  "base": "36b55e1d116fba825974443fb40f30a4e64232d3",
+  "branch": "fix/one-group-by-selection",
+  "done_when": "The one-group choice in review-tests.py uses the size of the selected test set (one group only when the selected tests are a small share of all tests, for example under a quarter, or the selection is small in absolute terms), not the changed-file count, so a small change to a central file runs all configured groups; new and existing repos get it on upgrade and forge sync",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-21T02:11:45.091877+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "In a repo with several test groups, a change of 5 or fewer code files runs one test group even when it touches a central file and selects most of the suite; a client's story part (5 files including a central module) ran one group, hit the 60-minute limit and was cancelled on every run"
+}
