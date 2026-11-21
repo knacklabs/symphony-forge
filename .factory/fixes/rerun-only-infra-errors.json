@@ -18,7 +18,7 @@
   "done_when": "Close, land and the CI test step rerun a failed job or failed test files only when the failure is a runner loss, cancellation or timeout, never when a test fails its check; a test that passes only on a rerun is still reported as flaky as today; new repos get it at init and existing repos on upgrade and forge sync",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "round": 1,
+  "round": 2,
   "status": "working",
   "steps": [
     {
@@ -28,6 +28,11 @@
     {
       "at": "2026-11-21T13:26:25.587806+00:00",
       "round": 1,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-21T13:57:51.845012+00:00",
+      "round": 2,
       "step": "resume"
     }
   ],
