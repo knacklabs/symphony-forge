@@ -22,8 +22,8 @@
     "id": "8073c2ad-5b3f-4255-a941-792c2d0a6496",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-21T02:17:39.216071+00:00",
@@ -37,13 +37,18 @@
     {
       "at": "2026-11-21T02:51:41.173543+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-21T03:16:50.983163+00:00",
+      "round": 2,
+      "step": "resume"
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "41740244780e62f59a4bea1bb159a63d19c99005",
+    "close": "b8496417-8d63-4e35-aaba-9a3a29174c35",
+    "head": "db455ba9f9cebfe4fddc9b518444b72394bd875d",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Main fails 13 work-round tests after the laptop-tests-before-push change (b2928beaa): tests/test_effort_ladder.py (for example test_3_reviews_reads_and_design_keep_their_effort[design], test_8_native_round_names_the_requested_effort[codex]) and tests/test_board_tests_after_worker.py (test_13_close_tests_after_worker_exit_show_tests_running[new]); the owner wants the laptop step in v1.2.45, so repair forward",
   "worker": "codex"
