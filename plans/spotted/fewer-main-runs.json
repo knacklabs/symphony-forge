@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/land.py\tTell human mergers to hold the task while the nightly is red\tfewer-main-runs",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 176,
+      "text": "Tell human mergers to hold the task while the nightly is red",
+      "from": "blocking",
+      "item": "fewer-main-runs",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/merge.py\tLet queued nightlies run when main advances\tfewer-main-runs",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 437,
+      "text": "Let queued nightlies run when main advances",
+      "from": "blocking",
+      "item": "fewer-main-runs",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/prcheck.py\tNot done: No test run starts on main after a merge; the nightly full run is the only run on main\tfewer-main-runs",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 331,
+      "text": "Not done: No test run starts on main after a merge; the nightly full run is the only run on main",
+      "from": "blocking",
+      "item": "fewer-main-runs",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/merge.py\tFollow-up: Preserve nightly details in queue summaries",
+      "kind": "edge",
+      "path": "src/forge/merge.py",
+      "line": 21,
+      "text": "Follow-up: Preserve nightly details in queue summaries",
+      "from": "review",
+      "item": "fewer-main-runs",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

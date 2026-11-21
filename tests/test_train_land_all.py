@@ -164,6 +164,9 @@ if args[:4] == ["api", "--paginate", "--jq", ".workflow_runs[]"] and any(a.start
             {"id": 2, "check_suite_id": 2, "event": "pull_request", "path": ".github/workflows/forge.yml@refs/pull/1/merge"}]
     if cfg.get("same_name"):
         runs.append({"id": 3, "check_suite_id": 3, "event": "pull_request", "path": ".github/workflows/review.yml@refs/pull/1/merge"})
+    # These workflows have reported jobs; queued/running jobs above still hold the wait.
+    for run in runs:
+        run["status"] = "completed"
     answer(lines(runs))
 if args[:1] == ["api"] and "/rules/branches/" in endpoint or "/protection/required_status_checks" in endpoint:
     if cfg.get("rules") == "unreadable":

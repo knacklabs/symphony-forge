@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/repo.py\tNot done: Windows merge after a pin change and the Windows workflow\twindows-release-blockers",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 1007,
+      "text": "Not done: Windows merge after a pin change and the Windows workflow",
+      "from": "blocking",
+      "item": "windows-release-blockers",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_merge_refreshes_behind_base.py\tGate: the merge recovery test uses the repaired code as the earlier release\twindows-release-blockers",
+      "kind": "bug",
+      "path": "tests/test_merge_refreshes_behind_base.py",
+      "line": 214,
+      "text": "Gate: the merge recovery test uses the repaired code as the earlier release",
+      "from": "blocking",
+      "item": "windows-release-blockers",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_record_only_failed_results.py\tGate: test_9 skips when Git for Windows is installed through Scoop\twindows-release-blockers",
+      "kind": "bug",
+      "path": "tests/test_record_only_failed_results.py",
+      "line": 152,
+      "text": "Gate: test_9 skips when Git for Windows is installed through Scoop",
+      "from": "blocking",
+      "item": "windows-release-blockers",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

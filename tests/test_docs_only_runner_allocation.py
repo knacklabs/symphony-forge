@@ -34,7 +34,7 @@ def test_1_docs_only_pr_keeps_the_test_runner_free(
     # eligibility and replacement of stale workflows. These extend this rule's owner.
     # Pushes now share the tests gate. Keep runner allocation and gate eligibility
     # together here: a separate test runner can no longer collapse into the gate.
-    # The existing push tests use one runner and cannot cover this allocation risk.
+    # Single-runner workflow cases cannot cover this allocation risk.
     # Evaluate the emitted workflow; no production seam or substitute job is needed.
     version = repo.forge("--version").stdout.split()[-1]
     receipt = tmp_path / "required-ran"
@@ -90,7 +90,7 @@ def test_1_docs_only_pr_keeps_the_test_runner_free(
         for event in ("pull_request", "push", "pull_request_target"):
             assert evaluate(gate_name, event) == ("tests (other event)"
                                                   if event == "pull_request_target" else "tests")
-            assert bool(evaluate(gate_guard, event)) == (event != "pull_request_target")
+            assert bool(evaluate(gate_guard, event)) == (event == "pull_request")
     base = repo.git("rev-parse", "HEAD", cwd=client)
     repo.git("update-ref", "refs/remotes/origin/main", base, cwd=client)
     (client / "README.md").write_text("Updated guide\n", "utf-8")
@@ -140,10 +140,9 @@ def test_1_docs_only_pr_keeps_the_test_runner_free(
     # Check code and non-PR events too: changing && to || must fail this test.
     for event in ("pull_request", "push", "pull_request_target", "schedule"):
         code_outputs = {"docs-only": "false", "docs-tests": "false"}
-        assert bool(evaluate(condition, event, **code_outputs)) == (event in ("pull_request", "push"))
-        assert bool(evaluate(condition, event, **{"docs-only": "true", "docs-tests": "false"})) == (event == "push")
+        assert bool(evaluate(condition, event, **code_outputs)) == (event == "pull_request")
+        assert not evaluate(condition, event, **{"docs-only": "true", "docs-tests": "false"})
     assert evaluate(label, **{"docs-tests": "false"}) == test_runner
-    assert evaluate(label, "push") == test_runner
     # Execute the emitted required-check rule: failed detection or tests never pass.
     shell = shutil.which("bash")
     assert shell, "The GitHub result job requires bash"

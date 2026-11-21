@@ -1,0 +1,138 @@
+{
+  "base": "882433996f61c9a2e313645714a7441e427456f5",
+  "branch": "fix/windows-release-blockers",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1fd34-c351-7eb0-b292-aa0318ed63df",
+    "head": null,
+    "start": "d8e3281fab710ae28e3b4d809f14efac14393622"
+  },
+  "done_when": "forge merge started inside the item's worktree ends with exit 0 on Windows after it merges, and test_9 of the record-only test no longer fails on Windows; forge-next.yml's Windows jobs pass on the fix branch",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "resume_pin() in src/forge/repo.py",
+      "file": "src/forge/repo.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 1007,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Windows merge after a pin change and the Windows workflow",
+      "work": 3
+    },
+    {
+      "area": "test_2_behind_recovery_finishes_close_under_the_upgraded_pin_before_retrying_merge() in tests/test_merge_refreshes_behind_base.py",
+      "file": "tests/test_merge_refreshes_behind_base.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 214,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: the merge recovery test uses the repaired code as the earlier release",
+      "work": 2
+    },
+    {
+      "area": "_run_workflow_step() in tests/test_record_only_failed_results.py",
+      "file": "tests/test_record_only_failed_results.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 152,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_9 skips when Git for Windows is installed through Scoop",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "1299431cc746bd463a588310f1485023dc133ffbcc92f67407551bf0c19657be",
+    "changed": "a581be28c165d0d44c45bae753b647cc6789c4c91e58cbffffd5a97b00ed73da",
+    "commit": "b7fc372acdf2e79f8f2fc57774b4a281bc558c02",
+    "dismissals": [],
+    "findings": [],
+    "id": "bba6bb2a-40a3-4220-9870-fddbdbcdf5a8",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-21T08:23:53.540577+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-21T08:24:13.934352+00:00",
+      "round": 1,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-21T08:42:08.501088+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-21T09:03:13.613790+00:00",
+      "round": 2,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-21T09:16:33.684580+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-21T09:16:33.700759+00:00",
+      "round": 2,
+      "step": "hold"
+    },
+    {
+      "at": "2026-11-21T09:42:07.490952+00:00",
+      "by": "owner",
+      "choice": "more",
+      "round": 2,
+      "step": "owner decision"
+    },
+    {
+      "at": "2026-11-21T10:19:58.435557+00:00",
+      "round": 3,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-21T10:24:53.998883+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-21T11:59:53.112890+00:00",
+      "round": 4,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-21T12:08:53.703097+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-21T09:16:33.700759+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "tests/test_record_only_failed_results.py",
+    "reason": "Owner chose on 21 Nov 2026: one more round for the UTF-8 path finding and the missing platform markers",
+    "wait_id": "45df85f5-242a-46f6-bf8f-67441e3bd3cd",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "16382caa-e527-4597-a6ac-686abb45d958",
+    "head": "014786e914bcde8ace461c279ad6a95949a420ed",
+    "keys": {},
+    "round": 3
+  },
+  "why": "The v1.2.45 release check fails on Windows in two places. First, forge merge run from inside the fix's worktree merges, cannot remove the worktree, then fails with 'git branch failed: not a git repository' (tests/test_merge_refreshes_behind_base.py test_2, all four cases; it passed on v1.2.44). Second, tests/test_record_only_failed_results.py test_9 runs a workflow step with bash, which on the Windows runner is the uninstalled WSL bash.",
+  "worker": "codex"
+}

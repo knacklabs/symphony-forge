@@ -157,6 +157,7 @@ def test_2_earlier_green_run_is_read_without_gh(env, github, tmp_path, previous)
     ci_env = dict(os.environ, PATH=no_gh_path(tmp_path, "git"), HEAD_SHA=head, BASE_SHA=base,
                   GITHUB_OUTPUT=str(output), GITHUB_API_URL=server, GH_TOKEN="test-token",
                   GITHUB_REPOSITORY="acme/shop", GITHUB_EVENT_NAME="pull_request",
+                  GITHUB_HEAD_REF="fix/tidy-readme",
                   GITHUB_WORKFLOW_REF="acme/shop/.github/workflows/forge.yml@refs/heads/main")
     checked = subprocess.run([sys.executable, ".forge/review-tests.py"], cwd=where, env=ci_env,
                              capture_output=True, text=True, timeout=60)

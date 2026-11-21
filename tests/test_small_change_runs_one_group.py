@@ -1,7 +1,7 @@
-"""Small changes use one group; shared inputs keep the full matrix.
+"""Direct commands and fixed shard counts keep the full matrix.
 
 Test-audit: Runs the synced CI script on real commits and evaluates its workflow.
-The existing test-only cases cannot detect code-count or shared-input mistakes.
+The existing test-only cases cannot detect shared-input or fixed-shard mistakes.
 No fake or production seam decides selection.
 Fixed shard counts must keep all groups: the old cases use Forge's pytest split
 and cannot catch omitted shards in a client's own command.
@@ -28,7 +28,7 @@ STORY = "FORGE-CITIME-1"
     (True, "vitest run --shard={group}/4"),
     (True, "vitest run --shard={group}/{groups} && vitest run --shard={group}/4"),
 ], ids=["dynamic-count", "fixed-shards", "mixed-suites"])
-def test_2_a_small_change_runs_one_test_group(repo, gh, tmp_path, fixed_shards, fast_test):
+def test_2_direct_and_fixed_commands_keep_configured_groups(repo, gh, tmp_path, fixed_shards, fast_test):
     client = _new_client(repo, gh, tmp_path, "client")
     _branch(repo, client, "small-change")
     _settings(client, test=PYTEST, groups=4 if fixed_shards else 2,
@@ -51,7 +51,8 @@ def test_2_a_small_change_runs_one_test_group(repo, gh, tmp_path, fixed_shards, 
     group_output = group_output.replace("steps.docs.outputs.one-group", "github.one_group")
     code = {f"src/file_{i}.py": "VALUE = 1\n" for i in range(6)}
     small = dict(list(code.items())[:3])
-    cases = [(small, [1]), (dict(list(code.items())[:5]), [1]), (code, [1, 2])]
+    # These fast commands run the configured suite rather than the related selection.
+    cases = [(small, [1, 2]), (dict(list(code.items())[:5]), [1, 2]), (code, [1, 2])]
     for shared in ("pnpm-lock.yaml", "tsconfig.json", "tests/conftest.py",
                    ".forge/review-tests.py", ".github/workflows/other.yml"):
         source = (client / shared).read_text("utf-8") if (client / shared).is_file() else ""
@@ -60,7 +61,7 @@ def test_2_a_small_change_runs_one_test_group(repo, gh, tmp_path, fixed_shards, 
     cases.append(({"tests/test_example.py": "def test_it(): assert 1\n",
                    ".forge/review-tests.py": script + "\n# Changed\n"}, [1, 2]))
     cases.append(({**small, "README.md": "Changed\n",
-                   "tests/test_example.py": "def test_it(): assert 1\n"}, [1]))
+                   "tests/test_example.py": "def test_it(): assert 1\n"}, [1, 2]))
     if fixed_shards:
         cases = [(small, [1, 2, 3, 4])]
     for files, expected in cases:

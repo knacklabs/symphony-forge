@@ -329,19 +329,19 @@ recommendation first. Save the answer before moving to the next question.
 
 ## Merges and settings
 
-In a repo with pull request CI tests, each push to the default branch runs the tests related
-to that merge. Laptop-test repos keep their full runs. New repos get this workflow at setup;
-existing repos get it when the upgrade refreshes Forge's files. The newest finished result on
-the newest default-branch commit with a result decides whether the branch is red. Merge runs
-from Forge's own workflow and full runs count the same way. A `tests` job from another workflow
-does not decide whether the branch is red. Forge looks back at most 30 commits. With no finished result
-in those commits, it treats the branch as not red. A pending, cancelled or skipped rerun does
-not clear a failed result.
-While the default branch is red, `forge merge` and `forge land` wait up to 90 minutes for a newer green result.
-If the wait ends, follow the printed repair step. To repair the branch, build a fix, have
-the owner merge it on GitHub, then start a full test run. The repair's green run or the green
-full run lets merges continue. When a person merges, land asks them to wait while the branch
-is red. Forge cannot stop a merge on GitHub. No saved records change on upgrade.
+The default branch starts no test run automatically after a merge. Pull requests keep their tests,
+and the nightly full run covers the default branch. A full run started by hand for a release or
+sign-off stays available. A scheduled run tests its checked-out commit even if the default branch
+moved while it waited for a runner. Laptop-test repos keep their full runs. New repos get this
+workflow at setup; existing repos get it on upgrade or `forge sync`.
+The newest nightly run of `full_suite_workflow`, or `forge.yml` when unset, decides whether
+merges stop. If its conclusion is failure, `forge merge` refuses a story part, says to hold it,
+and names the run and the repair step on a `Next:` line. Start a fix for that failure and merge
+the fix. Fixes can still merge
+so the repair can reach the default branch. A green result, no nightly run, or another conclusion
+does not stop merges. When a person merges, land holds the story part with the same repair advice.
+`forge land --all` lists the held part under Needs you.
+Forge cannot stop a merge on GitHub. No saved records change on upgrade.
 
 If the default branch moved after close, `forge merge` compares its new changed files with the item's changed files.
 It merges the default branch locally to check the combined change.
@@ -1602,6 +1602,9 @@ also stay in place; only recognized cache directories may be discarded.
 1. Ask which release to move to, recommending the newest.
 2. If the target release differs from the release on PATH, wait until no Forge runs are in
    progress anywhere on the machine. An install during a close can mix two releases.
+   This includes close and land while they wait for CI. A run whose recorded process ended
+   no longer blocks the install, even without an end record. A reused process number does
+   not keep that run alive. New and existing repos get this check on upgrade.
    `forge upgrade` names those runs and asks you to wait. If the target release is already on
    PATH, upgrade skips the install and continues while other runs remain in progress.
 3. Run `forge upgrade <release>` in the main checkout, on the default branch. It installs the
@@ -2476,11 +2479,18 @@ Upgrade close leaves the repo's local git hooks alone,
 including when it regenerates conflicted Forge files with the newly pinned release.
 If conflicted-merge handling fails, close aborts the merge and reports the error before retrying.
 After upgrading, run `forge sync` to receive
-the tests workflow's quick pass: it reuses a successful parent tests workflow only when the
-commit changes Forge's review or test-state record and its accompanying state under `.factory/`. Any other
-change or missing passing parent result runs the suite on the pull request merged into its
-current base. Reuse also requires the parent to include that base; a parent pull request run
-must have tested that same base. A changed base or missing proof runs the suite again.
+the tests workflow's quick pass: it reuses the latest completed attempt for the same code across
+Forge record commits under `.factory/` or `plans/spotted/`, including record-only merges.
+Other files under `plans/` do not qualify for this quick pass. Close waits for earlier same-code retries before pushing
+records. With no pull request or no active test run, close publishes its records first;
+the normal final check gate still runs after push and pull request creation.
+The pull request workflow reads the branch's last 30 runs in one request and shares
+the result with its test groups. A newer attempt's result takes precedence even when GitHub
+keeps its original run identifier.
+Any change outside those records runs the suite on the pull request merged into its current base.
+Cancelled runs, runs that failed to start and missing finished results also run the suite. Reuse
+requires each parent to include the current base; a parent pull request run must have tested that
+same base. A changed base or missing proof runs the suite again.
 Other workflows can use the same rule. Init and `forge sync` ship `.forge/records-only`.
 After checkout, add this one step: `- {id: forge-records, uses: ./.forge/records-only}`.
 Give the job `contents: read` and `actions: read` permissions, and fetch the full history.
@@ -2500,11 +2510,14 @@ steps:
     run: your-build-command
 ```
 
-The output is `records_only=true` only for a push or pull request whose parent passed this
-same workflow. The step uses Forge's existing close-record rule. Code changes, documentation
-changes, a failed parent run or missing proof produce `false`, so the workflow runs normally.
-For pull requests, the parent must also include the current base and its run must cover that base.
-Each job that uses the step skips only its guarded steps.
+The output is `records_only=true` only for a push or pull request with a successful, finished run
+of this workflow on the same code and, for a pull request, the same base. Forge records under
+`.factory/` and `plans/spotted/` records, including record-only merges, can reuse that result. The
+latest completed attempt wins; a newer attempt still running makes the suite run. A failed result writes `false` and exits
+with an error so the job keeps the failure. A cancelled run, a run that failed to start, or no
+finished result writes `false` and lets later steps run.
+GitHub retries run the tests again. For pull requests, the parent must include the current base
+and its run must cover that base. Each job that uses the step skips only its guarded steps.
 
 When `forge land` stops after its one fix round or on a check it cannot fix, judge
 them the same way: dismiss with evidence, or `forge work <item>`, then `forge land <item>` again.

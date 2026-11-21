@@ -98,10 +98,17 @@ def test_1_merged_main_keeps_ci_selection_on_own_changes(repo, gh, tmp_path, mon
         matrix = re.search(r"^        group: (.+)$", jobs["tests"], re.M)[1]
         matrix = matrix.replace("needs.docs-check.outputs.one-group", "github.one_group")
         groups = expression(matrix, one_group=one_group)
-        assert groups == [1], (values, group_output, matrix)
-        monkeypatch.setenv("FORGE_GROUP", str(groups[0]))
+        # Own changes select most of this fixture, so keep both configured groups.
+        assert groups == [1, 2], (values, group_output, matrix)
         monkeypatch.setenv("FORGE_GROUPS", str(len(groups)))
-    result = repo.forge("test", "--change", cwd=client)
+        results = []
+        for group in groups:
+            monkeypatch.setenv("FORGE_GROUP", str(group))
+            results.append(repo.forge("test", "--change", cwd=client))
+        result = subprocess.CompletedProcess([], max(run.returncode for run in results),
+            "".join(run.stdout for run in results), "".join(run.stderr for run in results))
+    else:
+        result = repo.forge("test", "--change", cwd=client)
     if main_test == "none":
         assert result.returncode == 0, result.stdout + result.stderr
     else:
@@ -110,4 +117,4 @@ def test_1_merged_main_keeps_ci_selection_on_own_changes(repo, gh, tmp_path, mon
             assert path + "::test_total" in result.stdout + result.stderr
     assert {path.name for path in receipts.iterdir()} == (
         {"mine", "also_mine"} if place == "ci" else {"mine", "also_mine", "incoming"})
-    assert values["one-group"] == ("true" if place == "ci" else "false")
+    assert values["one-group"] == "false"

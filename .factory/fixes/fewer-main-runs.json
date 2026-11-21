@@ -1,0 +1,158 @@
+{
+  "allow_large": "Owner allowed on 20 Nov 2026: removing the run on main after each merge touches 6 code files, mostly deletions (about 800 lines out, 330 in)",
+  "amendments": [
+    {
+      "at": "2026-11-19T17:43:47.397425+00:00",
+      "because": "Owner chose on 19 Nov 2026 to remove the run on main after each merge and gate merges on the nightly run instead",
+      "done_when": "No main run starts when the merged commit's code equals what the pull request's CI tested (main did not move since), and Forge records that result for main; when several merges land close together, a newer main run cancels the running one and tests everything since the last green main result, and a red result names the merges it covered; merges still stop while main's newest result is red; new and existing repos get it on upgrade and forge sync"
+    },
+    {
+      "at": "2026-11-19T18:16:51.080390+00:00",
+      "because": "The owner's direction removes the automatic run after each merge; release checks start runs on main by hand and must keep working",
+      "done_when": "No test run starts on main after a merge; the nightly full run is the only run on main, and Forge merges nothing while main's newest nightly result is red, naming the nightly run and the repair step; new and existing repos get it on upgrade and forge sync"
+    }
+  ],
+  "base": "77a35caa0f80ad338fc8ff08e4ab788a27ea34ad",
+  "branch": "fix/fewer-main-runs",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f4e7-116a-70e1-8995-01babd8fe144",
+    "head": null,
+    "start": "adb29843872c9c0342a8f1fcc6cb48c29b72b508"
+  },
+  "done_when": "No test run starts automatically on main after a merge (a run a person starts by hand, such as the release check, stays); the nightly full run is the only scheduled run on main, and Forge merges nothing while main's newest nightly result is red, naming the nightly run and the repair step; new and existing repos get it on upgrade and forge sync",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "red() in src/forge/merge.py",
+      "file": "src/forge/merge.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 437,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Let queued nightlies run when main advances",
+      "work": 2
+    },
+    {
+      "area": "ships() in src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 331,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: No test run starts on main after a merge; the nightly full run is the only run on main",
+      "work": 2
+    },
+    {
+      "area": "land() in src/forge/land.py",
+      "file": "src/forge/land.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 176,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Tell human mergers to hold the task while the nightly is red",
+      "work": 1
+    },
+    {
+      "area": "src/forge/merge.py",
+      "file": "src/forge/merge.py",
+      "gain": 2,
+      "harm": 1,
+      "line": 21,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Preserve nightly details in queue summaries",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "322d0e06ef08b2057e7e3bc60fb32991813a0cd3f7a46b94a317f654e67ec5e6",
+    "changed": "91ff45dc41e4b8ad9bced1744ad48dce6e21fbc0c6bebfbd81a5274f39b9b089",
+    "commit": "37ef3e79ec9a70a0584fbf8f577193a3693f9535",
+    "dismissals": [],
+    "findings": [],
+    "id": "e25a5506-85e7-49bb-9324-cc8b53bb7d95",
+    "status": "clean"
+  },
+  "round": 7,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-19T17:42:15.162611+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-19T17:42:24.342635+00:00",
+      "round": 1,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-19T17:43:53.192725+00:00",
+      "round": 2,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-19T18:05:55.995140+00:00",
+      "round": 3,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-19T18:16:21.958593+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T18:17:04.814618+00:00",
+      "round": 4,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-19T18:31:11.585143+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-19T19:48:29.704845+00:00",
+      "round": 5,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T03:16:59.391112+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-20T06:37:20.096548+00:00",
+      "round": 6,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T16:48:03.810704+00:00",
+      "round": 7,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T16:57:19.122013+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "0c2c8c2e-8238-474d-851c-5c3800ad1865",
+    "head": "721938b286d153a6df6d1bc98c626bc81c7a2877",
+    "keys": {},
+    "round": 5
+  },
+  "why": "The run of related tests on main after each merge uses runners that waiting pull requests need, and it repeats the pull request's CI whenever main did not move between that CI and the merge",
+  "worker": "codex"
+}

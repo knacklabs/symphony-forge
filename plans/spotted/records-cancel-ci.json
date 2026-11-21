@@ -1,0 +1,169 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/checks.py\tAvoid waiting for checks before opening the first pull request\trecords-cancel-ci",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 224,
+      "text": "Avoid waiting for checks before opening the first pull request",
+      "from": "blocking",
+      "item": "records-cancel-ci",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/checks.py\tNot done: Flush saved records on early exits with unpushed code\trecords-cancel-ci",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 55,
+      "text": "Not done: Flush saved records on early exits with unpushed code",
+      "from": "blocking",
+      "item": "records-cancel-ci",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/checks.py\tNot done: Wait for the actual queued run before publishing records\trecords-cancel-ci",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 67,
+      "text": "Not done: Wait for the actual queued run before publishing records",
+      "from": "blocking",
+      "item": "records-cancel-ci",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/checks.py\tPublish the review and owner question after a red check ends the wait\trecords-cancel-ci",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 67,
+      "text": "Publish the review and owner question after a red check ends the wait",
+      "from": "blocking",
+      "item": "records-cancel-ci",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/checks.py\tWait for retries on earlier same-code heads\trecords-cancel-ci",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 239,
+      "text": "Wait for retries on earlier same-code heads",
+      "from": "blocking",
+      "item": "records-cancel-ci",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tThe docs-only classifier still excludes application code under plans when the whole pull request changes only that folder.",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 41,
+      "text": "The docs-only classifier still excludes application code under plans when the whole pull request changes only that folder.",
+      "from": "worker",
+      "item": "records-cancel-ci",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/review-tests.py\tAllow cancelled and retried record-only runs to execute tests\trecords-cancel-ci",
+      "kind": "bug",
+      "path": "src/forge/templates/review-tests.py",
+      "line": 153,
+      "text": "Allow cancelled and retried record-only runs to execute tests",
+      "from": "blocking",
+      "item": "records-cancel-ci",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/review-tests.py\tBound workflow history lookups across record pushes\trecords-cancel-ci",
+      "kind": "bug",
+      "path": "src/forge/templates/review-tests.py",
+      "line": 141,
+      "text": "Bound workflow history lookups across record pushes",
+      "from": "blocking",
+      "item": "records-cancel-ci",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/review-tests.py\tDo not treat all code under plans/ as Forge records\trecords-cancel-ci",
+      "kind": "bug",
+      "path": "src/forge/templates/review-tests.py",
+      "line": 123,
+      "text": "Do not treat all code under plans/ as Forge records",
+      "from": "blocking",
+      "item": "records-cancel-ci",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/review-tests.py\tGate: Update the shipped instructions for failed parent runs\trecords-cancel-ci",
+      "kind": "bug",
+      "path": "src/forge/templates/review-tests.py",
+      "line": 214,
+      "text": "Gate: Update the shipped instructions for failed parent runs",
+      "from": "blocking",
+      "item": "records-cancel-ci",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/review-tests.py\tNot done: Honor both parents of a record-only merge\trecords-cancel-ci",
+      "kind": "bug",
+      "path": "src/forge/templates/review-tests.py",
+      "line": 153,
+      "text": "Not done: Honor both parents of a record-only merge",
+      "from": "blocking",
+      "item": "records-cancel-ci",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/review-tests.py\tNot done: Reuse results across all record-only commits\trecords-cancel-ci",
+      "kind": "bug",
+      "path": "src/forge/templates/review-tests.py",
+      "line": 134,
+      "text": "Not done: Reuse results across all record-only commits",
+      "from": "blocking",
+      "item": "records-cancel-ci",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/review-tests.py\tSelect the latest completed attempt when reusing a result\trecords-cancel-ci",
+      "kind": "bug",
+      "path": "src/forge/templates/review-tests.py",
+      "line": 154,
+      "text": "Select the latest completed attempt when reusing a result",
+      "from": "blocking",
+      "item": "records-cancel-ci",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\ttests/test_git_process_ceiling.py\tClose starts two cat-file batches and exceeds its process ceilings on the default branch too.",
+      "kind": "bug",
+      "path": "tests/test_git_process_ceiling.py",
+      "line": 94,
+      "text": "Close starts two cat-file batches and exceeds its process ceilings on the default branch too.",
+      "from": "worker",
+      "item": "records-cancel-ci",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_parallel_worker_crash_keeps_failed_names.py\tThe earlier-adoption worker-crash case fails in the full run and passes in the focused run.",
+      "kind": "bug",
+      "path": "tests/test_parallel_worker_crash_keeps_failed_names.py",
+      "line": 84,
+      "text": "The earlier-adoption worker-crash case fails in the full run and passes in the focused run.",
+      "from": "worker",
+      "item": "records-cancel-ci",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

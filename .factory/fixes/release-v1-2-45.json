@@ -1,0 +1,56 @@
+{
+  "allow_large": "Owner allowed on 20 Nov 2026: the release version bump changes the version number in 7 code files, as every release does",
+  "base": "bb2cefadfba141ffbc3347f7ca3383f3b5d1afef",
+  "branch": "fix/release-v1-2-45",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f984-52c6-72a2-9d67-44cf7b1cba62",
+    "head": null,
+    "start": "8d6790e256eeb767b3db6d97eb9d62d9570b2eb0"
+  },
+  "done_when": "Every version reference that names the current release says v1.2.45 (as the v1.2.44 release fix did, keeping v1.2.44 references used as a minimum release), the release version tests pass, and nothing else changes",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "0075cb7680ec75296c94937971aee3e08b4eaab7436203ede60377307971693a",
+    "changed": "6bb6bd39c6d7356e0729e40e022677d42c30fb8c6970a07658a414acad8a004a",
+    "commit": "26bf33066ec3e757248819a7e469e0573385f2a8",
+    "dismissals": [],
+    "findings": [],
+    "id": "29bb1834-f414-468c-9fa6-78aea3586da9",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-20T15:11:09.483412+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-20T15:12:39.828781+00:00",
+      "round": 1,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-21T07:25:32.109148+00:00",
+      "round": 2,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-21T07:29:09.924668+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "944b01b566cf0667cce2d320c6dbc312bbaec964",
+    "keys": {},
+    "round": null
+  },
+  "why": "Release v1.2.45: publish what merged since v1.2.44 (record pushes no longer cancel CI, one group after merging main, close names forge land, nightly gate with fixes always merging, review rounds block only on open findings and new P0s, laptop tests before push, upgrade ignores dead runs, review skips deleted and minified content, squash replay for stacked parts)",
+  "worker": "codex"
+}

@@ -166,6 +166,10 @@ line asking you to split them into smaller stories; already approved larger stor
 Parts can start on one reviewed, unmerged part by default. `stack = "off"` in `forge.toml`
 makes new parts wait for merges. A part that builds on another part keeps that base until close
 moves its own changes onto the default branch after the base merges.
+If an intermediate commit conflicts but the final change merges cleanly, close uses one
+commit for the final change and keeps the worker's evidence and Proof list.
+It keeps earlier review records as separate commits.
+Conflicts in the final change still stop close. New and existing repos get this on upgrade.
 Parts of another story must merge first. $story_files
 Close reviews only the stacked part's own changes and waits for its base to merge before CI and merge.
 After Forge merges the base, run the printed `forge close <part>` step to move the part onto the default branch.
@@ -201,6 +205,12 @@ for that commit's CI, even when the changed files do not overlap. This uses the 
 pytest picker, with no new test collection. Other runners and custom fast commands keep
 their local retest. Repos whose tests run only on the laptop keep their local runs.
 The nightly full run on the default branch covers the rest.
+No test run starts automatically on the default branch after a merge. Full runs started by hand
+for releases stay available. A scheduled full run tests its checked-out commit even if the
+default branch moved while it waited for a runner. If the newest nightly run fails, merge and
+the human handoff hold a story part and name the run. The Next line says to start a fix and merge it.
+The queue lists the held part under Needs you. Start a fix for it and merge that fix.
+Fixes can still merge to repair the failure. New and existing repos get this on upgrade and sync.
 `forge test --full` fails if the whole run has no tests. Set `test` in `forge.toml` to run
 the whole suite. An empty group of a nonempty suite is valid.
 Before the retest, Forge refuses uncommitted changes and names their files. After tests and
@@ -263,11 +273,20 @@ $delegation
   default branch, never skip the git hooks, never push and never merge: Forge and the human do that.
 - Never amend or rebase a commit that is already pushed.
 - `forge close` pushes the committed branch and runs CI on every platform. CI output reaches you
-  in your next round. Close saves the review before this push. Later review, acceptance and
-  spotted records reuse a green run of the same code and base, including across records saved
-  before one push. If you need CI evidence, commit and stop instead of asking the coordinator
-  to push or run CI. CI is the merge gate. Commit your local proof in the `Proof list:` without
-  waiting for CI results or timings.
+  in your next round. Close saves the review before this push. A push that changes only Forge
+  records waits for the published code's checks and earlier same-code retries to report,
+  even with a blocked review.
+  With no pull request or no active test run, close publishes its records first;
+  the normal final check gate still runs after push and pull request creation.
+  A refusal, wait limit or Ctrl-C still publishes saved records before close exits.
+  Records can also travel with the next code push. Only `.factory/` and `plans/spotted/`
+  records reuse the latest completed attempt of the same code and base, including across record-only
+  merges. Other files under `plans/` do not qualify for this quick pass. The workflow reads the branch's
+  last 30 runs once and shares the result with its test groups. A cancelled run, a run that failed
+  to start, or no finished result runs the tests. A failed result stays failed, and GitHub retries
+  run the tests again. If you need CI evidence,
+  commit and stop instead of asking the coordinator to push or run CI. CI is the merge gate. Commit
+  your local proof in the `Proof list:` without waiting for CI results or timings.
 - Close and doctor cancel only this pull request's older forge.yml runs when they block its newest queued run. Client workflows stay untouched. If a run stays active after cancellation, Forge prints GitHub's force-cancel command for the operator. It never calls that command automatically. Close keeps waiting for the new run.
 - On new and upgraded repos, close and merge retry only the failed jobs once when only CI test
   groups fail or time out. They wait for that attempt. Cancelled runs use the same retry limit.

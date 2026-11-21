@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import subprocess
 import time
 import tomllib
 from collections.abc import Callable
@@ -38,6 +39,47 @@ PASS, PENDING, RED, SKIPPED, QUEUED = "pass", "pending", "red", "skipped", "queu
 POLL = float(os.environ.get("FORGE_CHECKS_POLL", "60"))
 # One CLI process can wait before a push, after it, and again during merge.
 _progress_at: float | None = None
+
+
+def publish_on_exit(top: Path, run: Callable[[], int]) -> int:
+    """Flush newly saved records when close stops before its normal push."""
+    from forge import close, review
+    # Picking up the item already read this command's worktree snapshot.
+    trees = [dict(line.partition(" ")[::2] for line in block.splitlines())
+             for block in repo.git("worktree", "list", "--porcelain", cwd=top).split("\n\n")]
+    current = next(tree for tree in trees if Path(tree["worktree"]).resolve() == top.resolve())
+    before, branch = current["HEAD"], current["branch"].removeprefix("refs/heads/")
+    main = repo.forge_dir(top).parent.parent
+    flush = True
+    try:
+        result = run()
+        flush = result != 0
+        return result
+    except subprocess.CalledProcessError as error:
+        # The push already exhausted its bounded retries; keep the records local.
+        flush = error.cmd[:2] != ["git", "push"]
+        raise
+    finally:
+        # Windows can keep the folder after Git removes the checkout registration.
+        # Ask the surviving main checkout whether this branch still owns that folder.
+        if (flush and (attached := repo.git("branch", "--list", branch, "--format=%(worktreepath)", cwd=main))
+                and Path(attached).resolve() == top.resolve()):
+            saved = repo.git("log", "--format=", "--name-only", f"{before}..HEAD", cwd=top).splitlines()
+            remote = repo.run("git", "rev-parse", f"origin/{branch}", cwd=top)
+            if (any(path.startswith(review.BOOKKEEPING) or repo.SIGNOFF.fullmatch(path) for path in saved)
+                    and remote.stdout.strip() != repo.git("rev-parse", "HEAD", cwd=top)):
+                close._push_ready(top, branch, reviewed=True)
+
+
+def push_after_checks(top: Path, branch: str, *, reviewed: bool = False,
+                      slot: Callable[[bool], None] | None = None) -> None:
+    """Wait before record pushes, but flush saved records even when the wait stops."""
+    from forge import close, review
+    try:
+        after_code_ci(top, (review.branch_item(branch, top) or (branch, {}))[0],
+                      branch, repo.config(top), slot)
+    finally:
+        close._push_ready(top, branch, reviewed=reviewed)
 
 
 def _notice(message: str) -> None:
@@ -120,41 +162,75 @@ def wait(top: Path, item: str, sha: str, names: list[str], *, branch: str,
             repo.record_timing(top, item, "CI wait", start, clock, result["outcome"])
 
 
-def let_finish(top: Path, item: str, sha: str, names: list[str],
+def let_finish(top: Path, item: str, sha: str, names: list[str], branch: str,
                slot: Callable[[bool], None] | None = None) -> None:
     """Wait while any check on sha, except Forge's own review, is queued or running. Close calls
     this before it pushes a record-only commit: that push cancels the run in progress, so the
     record's own run could not reuse its result. Waiting reuses _seen and the wait's slot idea
     (a running wait lends the land queue place back) and needs no change to the workflow.
-    Test groups report no `tests` check until they end, so the wait does not look for names."""
+    A workflow can be queued before its job checks exist. Inspect the branch's recent
+    workflows too, including retries on earlier heads with the same code."""
     from forge import github
     with github.check_wait(top, slot) as (admit, waiting):
-        _let_finish(top, item, sha, names, waiting, admit)
+        _let_finish(top, item, sha, names, branch, waiting, admit)
 
 
-def _let_finish(top: Path, item: str, sha: str, names: list[str],
+def _let_finish(top: Path, item: str, sha: str, names: list[str], branch: str,
                 slot: Callable[[bool], None] | None, admit: Callable[[], None]) -> None:
-    timeout = float(os.environ["FORGE_CHECKS_WAIT"]) if "FORGE_CHECKS_WAIT" in os.environ else None
-    deadline = time.monotonic() + timeout if timeout is not None else None
+    explicit = "FORGE_CHECKS_WAIT" in os.environ
+    timeout = float(os.environ.get("FORGE_CHECKS_WAIT", "600"))
+    deadline = time.monotonic() + timeout
+    same_code = {sha: True}
     try:
         while True:
             admit()
-            try:
-                seen, _, runs = _seen(top, item, sha)
-            except repo.Refused:
-                return  # The push is not worth refusing for a status GitHub cannot answer.
+            seen, _, runs = _seen(top, item, sha)
             # This head predates the review record. Its review cannot be green yet.
             seen = [(name, PASS if name in ("forge-pr-check", "Review pull request") else state)
                     for name, state in seen]
-            _recover(top, item, sha, names, runs, seen)
-            _pending(item, names, seen)  # A failure ends the wait before a record-only push.
-            states = [state for _, state in seen]
+            failed = False
+            try:
+                _recover(top, item, sha, names, runs, seen)
+                _pending(item, [name for name in names if name != "forge-pr-check"], seen)
+            except repo.Refused as error:
+                if error.entry not in (REFUSALS["red"], REFUSALS["timeout"]):
+                    raise
+                failed = True  # Still let an earlier same-code retry finish before publishing.
+            states = [] if failed else [state for _, state in seen]
+            # Active jobs already keep the wait open. Recovery also reads their workflow;
+            # another read here can get ahead of its still-stale aggregate check.
+            workflows = []
             if not any(state in (PENDING, QUEUED) for state in states):
+                recent = _ask(top, item, ".workflow_runs",
+                         "repos/{owner}/{repo}/actions/runs", "--method", "GET",
+                         "--raw-field", "per_page=30", "--raw-field", f"branch={branch}", paginate=False)
+                for run in recent:
+                    if run.get("event") == "pull_request_target":
+                        continue
+                    head = run.get("head_sha", sha)
+                    if head == sha and failed:
+                        continue  # This run reported red; only earlier retries can hold the records.
+                    if head != sha and run.get("status") == "completed":
+                        continue
+                    if head not in same_code:
+                        # Record pushes cancel the whole PR's workflow, including retries
+                        # on an earlier head. Compare code once per immutable commit.
+                        same_code[head] = repo.run(
+                            "git", "diff", "--quiet", sha, head, "--", ".",
+                            ":(exclude).factory/", ":(exclude)plans/spotted/", cwd=top).returncode == 0
+                    if same_code[head]:
+                        workflows.append(run)
+            states.extend(QUEUED if run.get("status") == "queued" else PENDING
+                          for run in workflows if run.get("status") != "completed")
+            active = any(state in (PENDING, QUEUED) for state in states)
+            # Missing checks belong to the final gate after push. Only existing
+            # queued or running CI can be cancelled by publishing these records.
+            if not active:
                 return
             now = time.monotonic()
-            if timeout is not None and timeout > 0 and QUEUED in states:
+            if explicit and timeout > 0 and QUEUED in states:
                 deadline = now + timeout
-            left = deadline - now if deadline is not None else POLL
+            left = POLL if active and not explicit else deadline - now
             if left <= 0:
                 repo.refuse(REFUSALS["not_green"], item=item,
                             reason=f"GitHub has shown no check progress for {timeout / 60:g} minutes: "
@@ -168,22 +244,22 @@ def _let_finish(top: Path, item: str, sha: str, names: list[str],
             slot(False)
 
 
-def after_code_ci(top: Path, item: str, branch: str, cfg: dict[str, Any], serious: Any,
+def after_code_ci(top: Path, item: str, branch: str, cfg: dict[str, Any],
                   slot: Callable[[bool], None] | None = None) -> None:
     """Let the code's CI run end before close pushes only Forge's records on top of it."""
-    if serious or cfg["test_place"] != "ci":
-        return
-    from forge import review
+    from forge import close
     # Three dots: a replayed branch, whose remote head is no ancestor, shows its code and is skipped.
     # A branch with no remote head yet makes the diff fail, so nothing is running to wait for.
     changed = repo.run("git", "diff", "--name-only", "-z", "--no-renames", f"origin/{branch}...HEAD", cwd=top)
     paths = changed.stdout.split("\0")
-    if (changed.returncode or not any(paths)
-            or any(path and not (path.startswith(review.BOOKKEEPING) or repo.SIGNOFF.fullmatch(path))
+    if (changed.returncode
+            or any(path and not path.startswith((".factory/", "plans/spotted/"))
                    for path in paths)):
         return
-    remote = repo.run("git", "rev-parse", f"origin/{branch}", cwd=top)
-    let_finish(top, item, remote.stdout.strip(), cfg["checks"], slot)
+    remote, head = repo.git("rev-parse", f"origin/{branch}", "HEAD", cwd=top).splitlines()
+    if remote == head or close._pull_request(top, branch) is None:
+        return
+    let_finish(top, item, remote, cfg["checks"], branch, slot)
 
 
 def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progress: bool,

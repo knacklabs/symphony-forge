@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_upgrade_ignores_ended_processes.py\tGate: dead-process upgrade regression proof\tupgrade-dead-runs",
+      "kind": "bug",
+      "path": "tests/test_upgrade_ignores_ended_processes.py",
+      "line": 73,
+      "text": "Gate: dead-process upgrade regression proof",
+      "from": "blocking",
+      "item": "upgrade-dead-runs",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_upgrade_ignores_ended_processes.py\tNot done: live CI waits do not block forge upgrade\tupgrade-dead-runs",
+      "kind": "bug",
+      "path": "tests/test_upgrade_ignores_ended_processes.py",
+      "line": 21,
+      "text": "Not done: live CI waits do not block forge upgrade",
+      "from": "blocking",
+      "item": "upgrade-dead-runs",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
