@@ -38,11 +38,11 @@ def gate_passes(gate, result):
 
 def check_gate(workflow):
     gate = jobs(workflow)["tests-passed"]
-    # The same required result now covers pushes as well as pull requests.
+    # Only pull requests use this required check; merges no longer start tests.
     # Its executable group-result contract below stays the same.
     assert "'pull_request_target' && 'tests (other event)' || 'tests'" in gate
     assert "needs: [docs-check, tests]" in gate
-    assert "if: always() && (github.event_name == 'pull_request' || github.event_name == 'push')" in gate
+    assert "if: always() && github.event_name == 'pull_request'\n" in gate
     assert gate_passes(gate, "success")
     for result in ("failure", "cancelled", "skipped"):
         assert not gate_passes(gate, result)
