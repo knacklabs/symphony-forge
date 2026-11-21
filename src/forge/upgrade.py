@@ -14,7 +14,7 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-from forge import close, machine, quicktest, repo, story, task
+from forge import close, event_log, machine, quicktest, repo, story, task
 
 COMMANDS = [{
     "words": "upgrade", "run": "upgrade", "changes_state": False,
@@ -91,6 +91,17 @@ def upgrade(args: argparse.Namespace) -> int:
         repo.refuse(REFUSALS["bad_release"], release=release)
     needs_install = _on_path()[0] != release
     runs = machine.entries() if needs_install else []
+    if needs_install:
+        # Close can wait for CI after leaving both lanes. Unfinished history alone
+        # is not a live run: use the lanes' process identity check for these too.
+        for root in dict.fromkeys([top, *machine.remembered()]):
+            activity = event_log.read(root)
+            ended = {event.get("run_id") for event in activity if event.get("event") == "run end"}
+            for event in activity:
+                if (event.get("event") == "run start" and event.get("id") not in ended
+                        and machine._running(event.get("process"))
+                        and not any(run.get("process") == event["process"] for run in runs)):
+                    runs.append({**event, "repo_name": root.name})
     if runs:
         repo.refuse(REFUSALS["running"], runs="\n".join(
             f"- {run['repo_name']}: {run['item'] or 'test command'} ({run['kind']})"
