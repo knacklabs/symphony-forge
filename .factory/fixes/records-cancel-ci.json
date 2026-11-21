@@ -149,7 +149,7 @@
       "gain": 4,
       "harm": 3,
       "line": 153,
-      "outcome": "open",
+      "outcome": "fixed in round 7",
       "reason": "",
       "round": 6,
       "security": false,
@@ -162,7 +162,7 @@
       "gain": 4,
       "harm": 3,
       "line": 224,
-      "outcome": "open",
+      "outcome": "fixed in round 7",
       "reason": "",
       "round": 6,
       "security": false,
@@ -172,38 +172,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "4087a94e3c19d5795f67ed048e4d4c5cfba4ee42f79763a50d5642813d262130",
-    "changed": "14a3297d0c6f4d8f79bc68eeef3957ce61271c538cf7c2204d89c5ff733ab679",
-    "commit": "067ed7087453624e319543c9c51702b704be52db",
+    "branch_diff": "96c66c58935f5d56fde048d1db6c78d6c5b2f82aca59f386e1b22e8e7edf01aa",
+    "changed": "750f425f9beaf101e30671b5c1871518b5684ef8d6295883fd3a75acc1d3be58",
+    "commit": "bdabdc78b2f6193a380d51e8d5122c8f911a60f7",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - Two published record branches with the same code and base are merged. If the first parent has an older passing run and the second parent was tested more recently on its own branch and failed, this lookup cannot see the second run: GitHub's `branch` filter returns runs associated with the named branch. The merge can therefore inherit the older green result and skip tests despite the newer failure. The `merge-second-parent` case in `tests/test_record_only_failed_results.py:196` injects both branches' runs into a response to this filtered request, so it misses the real API behavior. The no-`gh` path applies the same filter. [GitHub documents the branch filter](https://docs.github.com/en/rest/actions/workflow-runs#list-workflow-runs-for-a-workflow).",
-        "file": "src/forge/templates/review-tests.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 153,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: Honor both parents of a record-only merge",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - A branch's code was published before its pull request was opened, for example by another machine or by an early-close flush. On the next close, saving the review leaves only records to push, so this wait looks for the configured `tests` check. The generated workflow runs on pull requests, so there is no run or check to find. Close waits for the default ten minutes, pushes the record on timeout, and exits before `src/forge/close.py:444` can create the pull request. A subsequent close is needed to proceed.\nAdds work: detect when there is no pull request to wait on; F 2 x H 2 = 4; 2 x C = 4.",
-        "file": "src/forge/checks.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 224,
-        "priority": "P1",
-        "title": "Avoid waiting for checks before opening the first pull request",
-        "work": 2
-      }
-    ],
-    "id": "d66124fe-5f68-4e52-91c6-efe3cb8eab42",
-    "status": "blocked"
+    "findings": [],
+    "id": "433158be-405d-47cf-b54a-50a565322fad",
+    "status": "clean"
   },
   "round": 6,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-20T03:29:36.361890+00:00",
@@ -298,6 +276,10 @@
       "at": "2026-11-21T05:59:50.721860+00:00",
       "round": 6,
       "step": "resume"
+    },
+    {
+      "at": "2026-11-21T06:12:32.424444+00:00",
+      "step": "review"
     }
   ],
   "stop": {
