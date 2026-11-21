@@ -1,0 +1,163 @@
+{
+  "base": "e2996699dda591224aea9b355564dc698ac77dac",
+  "branch": "fix/squash-replay-on-conflict",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f3c8-cc42-7801-8085-88fb69934a76",
+    "head": null,
+    "start": "0dcd667606deaf4a95c08207077073b51d23d3dd"
+  },
+  "done_when": "When the one-by-one replay conflicts but the whole-branch merge (merge-tree of the replay baseline and the branch head onto main) is clean, close replays the part as one commit with that merged tree and continues; a real whole-branch conflict still refuses as today; new and existing repos get it on upgrade",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_merge_default() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 734,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve earlier review rounds during the squash",
+      "work": 3
+    },
+    {
+      "area": "_merge_default() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 729,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep planning evidence from the worker's separate commit",
+      "work": 2
+    },
+    {
+      "area": "_merge_default() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 734,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep squashed follow-up fixes recognizable as built",
+      "work": 2
+    },
+    {
+      "area": "test_1_close_squashes_only_intermediate_conflicts() in tests/test_close_squashes_clean_stacked_replay.py",
+      "file": "tests/test_close_squashes_clean_stacked_replay.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 28,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_close_squashes_only_intermediate_conflicts",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "4a07fae1c0b576d446ba9c65b94756f93574a5a53c059958fddc9611100f3277",
+    "changed": "33d0a22cc94f56ed4f741b2548be0918753bc2f3f087c37caa89e3635cf2bcde",
+    "commit": "166cff8c808c1fa692ae445f5e7d6d2732e2c618",
+    "dismissals": [],
+    "findings": [],
+    "id": "1007dc90-14ec-4981-8ebe-e7999608145f",
+    "status": "clean"
+  },
+  "round": 6,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-19T12:29:37.707124+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-19T12:42:34.678024+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-20T05:52:35.058222+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-20T05:53:11.819725+00:00",
+      "round": 2,
+      "step": "hold"
+    },
+    {
+      "at": "2026-11-20T05:54:47.273609+00:00",
+      "by": "owner",
+      "choice": "switch",
+      "round": 2,
+      "step": "owner decision"
+    },
+    {
+      "at": "2026-11-20T05:55:06.664290+00:00",
+      "round": 3,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T09:01:08.775434+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-20T09:46:52.536173+00:00",
+      "round": 3,
+      "step": "hold"
+    },
+    {
+      "at": "2026-11-20T09:47:11.049443+00:00",
+      "by": "owner",
+      "choice": "same",
+      "round": 3,
+      "step": "owner decision"
+    },
+    {
+      "at": "2026-11-20T09:47:36.989999+00:00",
+      "round": 4,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T10:04:16.568586+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-20T10:41:08.891317+00:00",
+      "round": 5,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T10:47:42.897627+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-20T11:26:56.758981+00:00",
+      "round": 6,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T12:47:51.551098+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "ba90d408-8724-4964-988f-871b12cf0b08",
+    "head": "203d2e618fb91787f2fbce9bda527ea42ce1586d",
+    "keys": {},
+    "round": 5
+  },
+  "tool": "claude",
+  "why": "When a stacked part's parent has merged, close replays the part's own commits onto main one by one (git rebase in close._merge_default), so an early commit conflicts with later main edits of the same lines even when the whole-branch merge is clean; merging main into the branch never helps, and a client part looped 5 times on 19 Nov 2026",
+  "worker": "claude"
+}
