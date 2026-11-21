@@ -1,0 +1,15 @@
+{
+  "base": "36b55e1d116fba825974443fb40f30a4e64232d3",
+  "branch": "fix/revert-laptop-step",
+  "done_when": "b2928beaa is reverted and nothing else changes",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-21T04:02:36.275564+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Revert the laptop-tests-before-push change (b2928beaa) for v1.2.45: its after-round test run waits for a test place while holding an agent place, which breaks the machine's waiting lines and many work-round tests; the owner chose on 21 Nov 2026 to release without it and design it properly for v1.2.46"
+}
