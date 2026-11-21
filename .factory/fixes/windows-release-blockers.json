@@ -74,7 +74,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-21T08:23:53.540577+00:00",
@@ -102,12 +102,23 @@
       "at": "2026-11-21T09:16:33.700759+00:00",
       "round": 2,
       "step": "hold"
+    },
+    {
+      "at": "2026-11-21T09:42:07.490952+00:00",
+      "by": "owner",
+      "choice": "more",
+      "round": 2,
+      "step": "owner decision"
     }
   ],
   "stop": {
     "at": "2026-11-21T09:16:33.700759+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "tests/test_record_only_failed_results.py",
-    "wait_id": "45df85f5-242a-46f6-bf8f-67441e3bd3cd"
+    "reason": "Owner chose on 21 Nov 2026: one more round for the UTF-8 path finding and the missing platform markers",
+    "wait_id": "45df85f5-242a-46f6-bf8f-67441e3bd3cd",
+    "worker_round": 2
   },
   "stuck": {
     "close": "6756f0db-d277-480f-ad39-c112f187f3aa",
