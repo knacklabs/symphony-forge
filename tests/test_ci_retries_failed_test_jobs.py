@@ -3,6 +3,9 @@
 Audit: protects close/merge recovery and the shared attempt limit. Existing
 cancelled-run tests never supply failed groups. Only GitHub and time are fake;
 the command must request the retry and wait for later check results. No seam.
+Early progress failures extend this same command boundary: a quiet pytest run
+can fail before a later hang prevents its traceback. The earlier complete
+tracebacks do not cover this interrupted-output contract.
 """
 import json
 import sys
@@ -59,12 +62,17 @@ def test_1_failed_test_jobs_retry_once_and_wait(clock, monkeypatch, command, fai
     ]}))
     group_log = {
         "runner-loss": "",
-        "mixed": "The runner has lost communication with the server.\nAssertionError: assert 1 == 2",
+        "mixed": "The runner has lost communication with the server.\nFAILED tests/test_app.py::test_total\n",
+        "cancelled": "test group 1 of 2\tRun tests\t2026-11-21T15:00:00Z ...F.\n",
+        "timed_out": ("test group 1 of 2\tRun tests\t2026-11-21T15:00:00Z .E... [ 40%]\n"
+                      "The job has exceeded the maximum execution time\n"),
         "pytest-timeout-2.3": "FAILED tests/test_app.py::test_total[one - two] - Failed: Timeout >0.2s",
         "pytest-timeout-2.4": "FAILED tests/test_app.py::test_total[one - two] - Failed: Timeout (>0.2s) from pytest-timeout.",
         "fixture-error": ("The job exceeded the maximum execution time\n"
-                          "ERROR at setup of test_app.py::test_total\nE RuntimeError: fixture failed"),
+                          "ERROR tests/test_app.py::test_total\n"),
     }.get(failure, "FAILED tests/test_app.py::test_total - AssertionError: assert 1 == 2")
+    if failure.startswith("pytest-timeout-"):
+        group_log = "\x1b[31mF\x1b[0m [100%]\n" + group_log
     if conclusion in ("cancelled", "timed_out"):
         # gh's failed-step filter omits cancelled jobs/steps, even after a test failed.
         clock.gh.respond("run", "view", "77", "--job", "701", "--log-failed", stdout="")

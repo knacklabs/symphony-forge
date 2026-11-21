@@ -328,12 +328,19 @@ PYTEST_TIMEOUT = r"Failed: Timeout (?:>[^\s]+s|\(>[^\s]+s\) from pytest-timeout\
 
 
 def _product_failure(text: str) -> bool:
+    text = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", text).replace("\r", "\n")
+    text = re.sub(r"(?m)^(?:[^\t\n]*\t){2}\d{4}-\d\d-\d\dT\S+[ \t]?", "", text)
+    progress = "".join(re.findall(
+        r"(?m)^[ \t]*(?:[^\n]*\.py[ \t]+)?([.FEsxXR]+)(?:[ \t]+\[[ \t]*\d+%\])?[ \t]*$", text))
+    reports = re.findall(r"\b(?:FAILED|ERROR)\b[^\n]*", text)
+    timeouts = sum(bool(re.fullmatch(r"FAILED [^\n]+ - " + PYTEST_TIMEOUT, report.strip()))
+                   for report in reports)
+    # A completed test-body timeout accounts for its own F. Any other progress
+    # failure still blocks when a later hang prevents pytest's final traceback.
     # Inspect failure reports, not rendered source such as threading.py's RuntimeError.
-    return bool(re.search(
-        r"AssertionError|Error: expect|\bERROR (?:at |collecting |[^\n]+ - )|"
-        r"\bE\s+(?:\w*(?:Error|Exception):|assert\b|Failed: (?!Timeout (?:>|\(>)))", text)
-        or any(not re.fullmatch(PYTEST_TIMEOUT, failure.strip())
-               for failure in re.findall(r"\bFAILED [^\n]+ - ([^\n]+)", text)))
+    return ("E" in progress or progress.count("F") > timeouts or len(reports) > timeouts
+            or bool(re.search(r"AssertionError|Error: expect|"
+                              r"\bE\s+(?:\w*(?:Error|Exception):|assert\b|Failed: (?!Timeout (?:>|\(>)))", text)))
 
 
 def _infrastructure(text: str) -> bool:
