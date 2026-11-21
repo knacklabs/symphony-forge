@@ -8,8 +8,8 @@
       "text": "Not done: Answers are not reconciled across machines",
       "from": "blocking",
       "item": "clear-answered-worker-question",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/task.py\tNot done: Other requested commands leave answered questions open\tclear-answered-worker-question",
@@ -19,8 +19,8 @@
       "text": "Not done: Other requested commands leave answered questions open",
       "from": "blocking",
       "item": "clear-answered-worker-question",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/task.py\tPreserve unrelated questions in the same worker handoff\tclear-answered-worker-question",
@@ -30,8 +30,8 @@
       "text": "Preserve unrelated questions in the same worker handoff",
       "from": "blocking",
       "item": "clear-answered-worker-question",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/task.py\tResume an unbuilt fix after its size allowance\tclear-answered-worker-question",
