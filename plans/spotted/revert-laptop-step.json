@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/worker.py\tGate: proof list\trevert-laptop-step",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 390,
+      "text": "Gate: proof list",
+      "from": "blocking",
+      "item": "revert-laptop-step",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

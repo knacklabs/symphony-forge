@@ -385,8 +385,7 @@ RENDERED = ("Rendered problem: ", "Rendered check: ")  # close never cuts these;
 
 
 def test_run(top: Path, command: str, base: str, *, always: bool = False,
-             closing: bool = True, retry: bool = True,
-             limit_selection: bool = False) -> tuple[int, str]:
+             closing: bool = True) -> tuple[int, str]:
     """Run or skip tests; report a bounded tail, all failed tests and the full log path."""
     command = repo.grouped(top, command)
     branch = repo.current_branch(top) or "HEAD"  # Pull-request CI checks out a detached HEAD.
@@ -435,9 +434,6 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
                        PYTEST_PLUGINS=",".join(filter(None, [os.environ.get("PYTEST_PLUGINS"),
                                                              "_forge_test_results"])))
             env.pop("FORGE_WORKER_TESTS", None)
-            env.pop("FORGE_RELATED_LIMIT", None)
-            if limit_selection:
-                env["FORGE_RELATED_LIMIT"] = "1"
             if not closing:
                 env["FORGE_WORKER_TESTS"] = "1"
             with repo.record_run(top, item, "test") as ran:
@@ -467,7 +463,7 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
                         done = subprocess.CompletedProcess(command, 0, done.stdout +
                                                            "\nThis group got no tests to run.\n")
                     history.append(done.stdout)
-                    if not closing or not retry or attempt or done.returncode == 0:
+                    if not closing or attempt or done.returncode == 0:
                         break
                     if any(json.loads(line[len(fasttest.INVOCATION_HEADER):]).get("interrupted")
                            for line in evidence.splitlines() if line.startswith(fasttest.INVOCATION_HEADER)):
@@ -489,13 +485,11 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
                                    ". They passed on the one retry.\n")
                 done = subprocess.CompletedProcess(command, done.returncode, "".join(history))
                 outcome = ran["outcome"] = "passed" if done.returncode == 0 else "failed"
-                if outcome == "passed" and fasttest.WIDE_SELECTION in done.stdout:
-                    outcome = ran["outcome"] = "skipped"
-            if outcome != "skipped" and product and product == records.tested_product(top):
+            if product and product == records.tested_product(top):
                 evidence = results.read_text("utf-8") if results.is_file() else done.stdout
                 results.write_text("# " + json.dumps({"product": product, "exit": done.returncode})
                                    + "\n" + evidence, "utf-8")
-            if outcome == "passed" and passed:
+            if done.returncode == 0 and passed:
                 passed.parent.mkdir(exist_ok=True)
                 # The run's per-test results, so a close that skips this run still lists them.
                 passed.write_text(results.read_text("utf-8") if results.is_file() else "", "utf-8")
@@ -506,7 +500,7 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
         shown = {n for n, line in enumerate(out) if any(mark in line for mark in RENDERED)}
         picked = sorted(({i for n, line in enumerate(out) if "skip" in line.lower()
                           for i in (n - 1, n) if i >= 0} | set(range(max(0, len(out) - 30), len(out)))
-                         | {n for n, line in enumerate(out) if line.startswith((GAP, fasttest.NO_TESTS))}) - shown)
+                         | {n for n, line in enumerate(out) if line.startswith(GAP)}) - shown)
         lines = [out[i] for i in picked]
         if len(lines) > 80:  # the tail is the last 30 picked; the earliest skip lines fill the rest
             lines = [*lines[:50], f"({len(lines) - 80} skip lines cut here)", *lines[-30:]]

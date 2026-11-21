@@ -44,4 +44,4 @@ def test_1_test_explains_sample_data_and_runs_configured_commands(repo, gh, tmp_
     _settings(config, test="")
     absent = repo.forge("test")
     assert absent.returncode == 0, absent.stdout + absent.stderr
-    assert absent.stdout == "No tests ran: forge.toml names no test command, so forge test ran none.\n"
+    assert absent.stdout == "forge.toml names no test command, so forge test ran none.\n"
