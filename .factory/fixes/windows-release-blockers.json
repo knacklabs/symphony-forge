@@ -44,7 +44,7 @@
       "gain": 3,
       "harm": 3,
       "line": 152,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -54,27 +54,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "1eb075ddb4e706dca7e0ba22d457f40d41d6aeb98a506da46c78bdbf8d7e22e8",
-    "changed": "4188e4a7ba5f57325161ec2d6c64c270e452984d84dcb80a2e38246a58d03910",
-    "commit": "feab97d54d56fa901250875f16d179f341befaf6",
+    "branch_diff": "f6b8162236c0cab6eb2e61bcc28950b5695966e018d7820b57ff28ec3507c195",
+    "changed": "e95d00c28173f5447cb608c642e53703215357ba29a15073c3e38c98700102c8",
+    "commit": "192c0ece95ebcac81a8002cc049518081b7d5089",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - A Windows user named Jos\u00e9 installs Git with Scoop under their profile and runs the tests with Python 3.11 using the Windows cp1252 code page.\nGit reports its executable path in UTF-8, but `text=True` decodes it using Python's locale encoding. The profile name is therefore garbled, so the ancestor search misses the installed Bash and skips test_9 despite Bash being available. The shared-history rule remains unchecked on that Scoop setup. Read Git's output as UTF-8. See [Git's Windows path conversion](https://github.com/git/git/blob/master/exec-cmd.c#L172-L186) and the [Python subprocess documentation](https://docs.python.org/3.11/library/subprocess.html).",
-        "file": "tests/test_record_only_failed_results.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 152,
-        "priority": "P1",
-        "title": "Gate: test_9 skips when Git for Windows is installed through Scoop",
-        "work": 1
-      }
-    ],
-    "id": "206e5990-9373-4787-820e-e6074523f005",
-    "status": "blocked"
+    "findings": [],
+    "id": "37a87746-72d1-4513-a903-b7f48e6b9e75",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-21T08:23:53.540577+00:00",
@@ -114,6 +103,10 @@
       "at": "2026-11-21T10:19:58.435557+00:00",
       "round": 3,
       "step": "resume"
+    },
+    {
+      "at": "2026-11-21T10:24:53.998883+00:00",
+      "step": "review"
     }
   ],
   "stop": {
