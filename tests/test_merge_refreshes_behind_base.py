@@ -214,7 +214,7 @@ def test_2_behind_recovery_finishes_close_under_the_upgraded_pin_before_retrying
     selected = env.tmp / "earlier-source"
     for name in ("repo.py", "review.py", "__init__.py"):
         shutil.copy2(ROOT / "src/forge" / name, selected / "forge" / name)
-    version = selected / "forge/__init__.py"
+    version = selected / "forge" / "__init__.py"
     version.write_text(version.read_text("utf-8").replace(
         current.removeprefix("v"), following.removeprefix("v")), encoding="utf-8")
     _install(env.repo.bin, "forge", FORGE_SHIM.format(
