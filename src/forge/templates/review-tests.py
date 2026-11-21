@@ -3,6 +3,7 @@ import ast
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -92,20 +93,44 @@ def small_change(base: str, excludes: list[str], tests_only: bool) -> bool:
                 or re.search(r"(^|[.-])(lock|config)([.-]|$)", path.name)
                 or re.fullmatch(r"requirements.*\.txt|tsconfig.*\.json", path.name)):
             return False
-    if tests_only:
-        return True
     try:
-        from forge.fasttest import always_tests, related
+        from forge import repo
+        from forge.fasttest import always_tests, pytest_options, related
         from forge.quicktest import test_parts
 
         cfg = tomllib.loads(Path("forge.toml").read_text("utf-8"))
-        if not any(kind == "python" for kind, _, _ in test_parts(Path.cwd(), cfg["test"])):
+        # Direct fast commands and mixed runners do more work than related() counts.
+        if cfg.get("fast_test") and cfg["fast_test"].strip() != "forge test --pytest {base}":
+            return False
+        if tests_only:
+            return True
+        parts = test_parts(Path.cwd(), cfg["test"])
+        if len(parts) != 1 or parts[0][0] != "python" or not repo.pytest_split(Path.cwd(), cfg["test"]):
+            return False
+        words = shlex.split(cfg["test"])
+        runner = next(i for i, word in enumerate(words) if Path(word).name in {"pytest", "pytest.exe"})
+        if pytest_options(words).strip():
+            return False
+        # Only explicit suite roots with understood options can supply a safe denominator.
+        roots, arguments = [], iter(words[runner + 1:])
+        for word in arguments:
+            if word in {"--splits", "--group", "--splitting-algorithm", "-n"}:
+                next(arguments)
+            elif word in {"-q", "-v", "-x", "--disable-warnings", "--strict-markers", "--strict-config"}:
+                continue
+            elif not word.startswith("-") and Path(word.split("::", 1)[0]).exists():
+                roots.append(Path(word.split("::", 1)[0]))
+            else:
+                return False
+        if not roots:
             return False
         picked, tests, shared, _ = related(base)
-        selected = set(picked) | {name.split("::", 1)[0]
-                                  for name in always_tests(Path.cwd(), cfg)}
-        return not shared and bool(tests) and len(selected) * 4 < len(tests)
-    except (ImportError, subprocess.CalledProcessError, ValueError, KeyError, OSError):
+        suite = {name for name in tests if any(Path(name) == root or Path(name).is_relative_to(root)
+                                             for root in roots)}
+        always = {name.split("::", 1)[0] for name in always_tests(Path.cwd(), cfg)}
+        selected = set(picked) & suite | always
+        return not shared and bool(suite) and len(selected) * 4 < len(suite | always)
+    except (ImportError, subprocess.CalledProcessError, ValueError, KeyError, OSError, StopIteration):
         # The lightweight select job may not have Forge's dependencies installed.
         return False
 

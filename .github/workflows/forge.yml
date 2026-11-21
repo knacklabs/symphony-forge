@@ -25,7 +25,7 @@ jobs:
     outputs:
       docs-only: ${{ steps.docs.outputs.docs-only }}
       docs-tests: ${{ steps.docs.outputs.docs-tests }}
-      one-group: ${{ 'false' }}
+      one-group: ${{ steps.docs.outputs.one-group }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -33,13 +33,22 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
+      - uses: astral-sh/setup-uv@v6
+        id: setup-uv
+        continue-on-error: true
+        with:
+          enable-cache: true
+      - uses: astral-sh/setup-uv@v6
+        if: steps.setup-uv.outcome == 'failure'
+        with:
+          enable-cache: true
       - id: docs
         env:
           GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           DOCS_ONLY_EXCLUDES: '[":(exclude,glob).factory/**", ":(exclude,glob)plans/**", ":(exclude,glob).forge/**", ":(exclude,glob)docs/**", ":(exclude,glob,icase)**/*.md", ":(exclude,glob,icase)**/*.png", ":(exclude,glob,icase)**/*.jpg", ":(exclude,glob,icase)**/*.jpeg", ":(exclude,glob,icase)**/*.gif", ":(exclude,glob,icase)**/*.svg", ":(exclude,glob,icase)**/*.webp", ":(exclude,glob,icase)**/*.avif", ":(exclude,glob,icase)**/*.ico", ":(exclude,glob,icase)**/*.bmp", ":(exclude,glob,icase)**/*.tif", ":(exclude,glob,icase)**/*.tiff", ":(exclude,glob,icase)**/*.icns", ":(exclude,glob,icase)**/*.woff", ":(exclude,glob,icase)**/*.woff2", ":(exclude,glob,icase)**/*.ttf", ":(exclude,glob,icase)**/*.otf", ":(exclude,glob,icase)**/*.eot"]'
-        run: python .forge/review-tests.py
+        run: uv run --no-project --with . python .forge/review-tests.py || python -I -S .forge/review-tests.py
 
   tests:
     needs: docs-check
