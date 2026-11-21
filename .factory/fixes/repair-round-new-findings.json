@@ -114,8 +114,8 @@
     "id": "2942eba5-15bb-404e-b32c-154c673149d2",
     "status": "clean"
   },
-  "round": 6,
-  "status": "waiting for checks",
+  "round": 7,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-20T04:07:50.110997+00:00",
@@ -198,15 +198,18 @@
     {
       "at": "2026-11-20T15:03:55.305380+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-21T13:49:40.138707+00:00",
+      "round": 7,
+      "step": "resume"
     }
   ],
   "stuck": {
-    "close": "bb6198fa-c8c8-4309-a787-885234f07d33",
-    "head": "f35961a2d91619cc690dcf319db1b3f10435e383",
-    "keys": {
-      "the open P0 [p1] do not restore follow-up status to an escalated p0 in src/forge/autoreview.py": 2
-    },
-    "round": 5
+    "close": "a0d45827-530a-46da-81e0-077a39bbb08c",
+    "head": "fc1ac0d7b335ba6df5f990e591b5109cdcf84002",
+    "keys": {},
+    "round": 6
   },
   "why": "Repair-round reviews keep raising new P1 findings in code the repair did not change, although the repair-review prompt (src/forge/templates/review.md, Repair review) allows a new finding only when it is a P0 in normal use; 25 of 38 merged items since 17 Nov 2026 needed 3 or more rounds",
   "worker": "codex"
