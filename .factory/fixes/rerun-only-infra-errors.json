@@ -193,7 +193,7 @@
     "id": "e5db9147-51db-481d-bcb6-8236c9551e87",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -213,13 +213,20 @@
     {
       "at": "2026-11-21T14:10:37.113200+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-21T14:11:18.933074+00:00",
+      "round": 3,
+      "step": "resume"
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "8dc470aa1c081e45e76278450132515ad83268f6",
-    "keys": {},
-    "round": null
+    "close": "afb4ece3-a8ea-4f9c-ae5c-57e166b39b7c",
+    "head": "a43ce2f1e9beeee55a371c6259eb17e1e7a44537",
+    "keys": {
+      "the open P0 not done: mixed infrastructure and product failures still retry in src/forge/land.py": 1
+    },
+    "round": 2
   },
   "why": "Forge reruns failed CI test jobs once (close's 'Started the failed test jobs again once') and reruns failed test files inside a group, even when a test failed its assertion. In Forge's last 150 runs, 0 of 38 job reruns passed and reruns cost 28% of CI time. Owner chose on 21 Nov 2026: rerun only on infrastructure errors.",
   "worker": "codex"
