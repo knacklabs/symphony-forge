@@ -29,6 +29,7 @@ def _group(conclusion, status="completed"):
 def test_1_failed_test_jobs_retry_once_and_wait(clock, monkeypatch, command, failure, second):
     monkeypatch.setenv("FORGE_CHECKS_WAIT", "600")
     _agent(clock)
+    clock.open_pr("")  # The published code already has the PR whose failed jobs recover.
     where = _fix(clock, "working", worked=True, changes={
         "app.py": "print('hello')\n",
         ".github/workflows/forge.yml": "name: Forge\njobs:\n  tests:\n    timeout-minutes: 60\n",

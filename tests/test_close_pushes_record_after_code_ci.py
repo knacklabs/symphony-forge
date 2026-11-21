@@ -35,6 +35,7 @@ def test_1_record_push_waits_until_the_running_code_ci_run_ends(env, tmp_path, m
     env.repo.git("commit", "-q", "-m", "Tests run in CI")
     env.repo.git("push", "-q", "origin", "main")
     item, where = env.start_fix()
+    env.open_pr("")  # These running checks belong to an existing pull request.
     env.repo.git("push", "-q", "-u", "origin", "fix/tidy-readme", cwd=where)
     parent = env.repo.git("rev-parse", "HEAD", cwd=where)
     log = tmp_path / "remote-pushes.jsonl"
@@ -68,7 +69,8 @@ def test_1_record_push_waits_until_the_running_code_ci_run_ends(env, tmp_path, m
     if override is not None:
         assert closed.returncode == 1, closed.stdout + closed.stderr
         assert "no check progress for 0 minutes" in closed.stderr
-        assert not [push for push in pushes if push[1] == parent], pushes
+        # An explicit stop now flushes saved records before close exits.
+        assert [push for push in pushes if push[1] == parent], pushes
         return
     assert closed.returncode == 0, closed.stdout + closed.stderr
     assert "Waiting: the code's checks are still queued or running." in closed.stdout

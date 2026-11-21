@@ -49,6 +49,8 @@ def test_1_ci_polls_at_the_configured_interval(land, fake_clock, monkeypatch, tm
         assert closed.returncode == 0, closed.stdout + closed.stderr
     if pre_push:
         env.repo.git("push", "-q", "-u", "origin", BRANCH, cwd=where)
+        # The running pull-request check below needs an existing pull request.
+        env.open_pr("")
         parent = env.repo.git("rev-parse", "HEAD", cwd=where)
         # Measure what close waited BEFORE publishing its review record. Reading
         # green only after the push would pass an ordering-only interval test.

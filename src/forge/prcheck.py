@@ -65,6 +65,8 @@ jobs:
       docs-only: ${{ steps.docs.outputs.docs-only }}
       docs-tests: ${{ steps.docs.outputs.docs-tests }}
       one-group: ${{ steps.docs.outputs.one-group }}
+      reuse: ${{ steps.docs.outputs.reuse }}
+      parent-conclusion: ${{ steps.docs.outputs.parent-conclusion }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -109,7 +111,11 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           DOCS_ONLY_EXCLUDES: '<docs-excludes>'
+          PR_REUSE: ${{ needs.docs-check.outputs.reuse }}
+          PR_PARENT_CONCLUSION: ${{ needs.docs-check.outputs.parent-conclusion }}
         run: python .forge/review-tests.py
+      - if: steps.parent-tests.outputs.parent-conclusion == 'failure'
+        run: exit 1
 <npm-cache><node><test-install>      - run: <test>
         if: steps.parent-tests.outputs.reuse != 'true'
 
@@ -422,6 +428,8 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
         single = single.replace("${{ matrix.group }}", "'1'").replace(
             "${{ needs.docs-check.outputs.one-group == 'true' && '1' || '<groups>' }}", "'1'")
         single = single.replace("    steps:\n", "    steps:\n<group-warning>", 1)
+        for output in ("reuse", "parent-conclusion"):
+            single = single.replace("${{ needs.docs-check.outputs." + output + " }}", "''")
         template = template[:start] + single + template[gate:]
     elif test_runner != regular_runner:
         regular_label, tests_label = ("'" + label.replace("'", "''") + "'" for label in

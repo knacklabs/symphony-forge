@@ -1,0 +1,311 @@
+{
+  "allow_large": "Owner allowed on 20 Nov 2026: stopping record pushes from cancelling CI touches 6 code files across close's push paths",
+  "base": "41c53141ecc53527d8952bc84065e55e6f5ffbe4",
+  "branch": "fix/records-cancel-ci",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f700-ca70-7da3-8707-a8f22c94f142",
+    "head": null,
+    "start": "052a1e68f959c5aec2afc73e7f6b38139246ad0c"
+  },
+  "done_when": "A push whose new commits change only Forge's record files never cancels or restarts a running or queued test run of the same code: close holds its record commits until the checks report (or pushes them with the code), and a record-only push reuses the earlier result; new and existing repos get it on upgrade and forge sync",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "push_after_checks() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 67,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Wait for the actual queued run before publishing records",
+      "work": 2
+    },
+    {
+      "area": "reuse() in src/forge/templates/review-tests.py",
+      "file": "src/forge/templates/review-tests.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 134,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Reuse results across all record-only commits",
+      "work": 2
+    },
+    {
+      "area": "reuse() in src/forge/templates/review-tests.py",
+      "file": "src/forge/templates/review-tests.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 153,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Allow cancelled and retried record-only runs to execute tests",
+      "work": 2
+    },
+    {
+      "area": "push_after_checks() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 67,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Publish the review and owner question after a red check ends the wait",
+      "work": 2
+    },
+    {
+      "area": "publish_on_exit() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 55,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Flush saved records on early exits with unpushed code",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/review-tests.py",
+      "file": "src/forge/templates/review-tests.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 214,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Update the shipped instructions for failed parent runs",
+      "work": 1
+    },
+    {
+      "area": "reuse() in src/forge/templates/review-tests.py",
+      "file": "src/forge/templates/review-tests.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 123,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Do not treat all code under plans/ as Forge records",
+      "work": 2
+    },
+    {
+      "area": "after_code_ci() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 239,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted on 20 Nov 2026: a hand rerun of the original test run after more than about 15 record pushes may be missed; known issue for v1.2.46",
+      "round": 3,
+      "security": false,
+      "title": "Wait for retries on earlier same-code heads",
+      "work": 2
+    },
+    {
+      "area": "reuse() in src/forge/templates/review-tests.py",
+      "file": "src/forge/templates/review-tests.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 154,
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: Owner accepted on 20 Nov 2026: a hand rerun of the original test run after more than about 15 record pushes may be missed; known issue for v1.2.46",
+      "round": 3,
+      "security": false,
+      "title": "Select the latest completed attempt when reusing a result",
+      "work": 2
+    },
+    {
+      "area": "reuse() in src/forge/templates/review-tests.py",
+      "file": "src/forge/templates/review-tests.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 141,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Bound workflow history lookups across record pushes",
+      "work": 2
+    },
+    {
+      "area": "reuse() in src/forge/templates/review-tests.py",
+      "file": "src/forge/templates/review-tests.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 153,
+      "outcome": "fixed in round 7",
+      "reason": "",
+      "round": 6,
+      "security": false,
+      "title": "Not done: Honor both parents of a record-only merge",
+      "work": 2
+    },
+    {
+      "area": "_let_finish() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 224,
+      "outcome": "fixed in round 7",
+      "reason": "",
+      "round": 6,
+      "security": false,
+      "title": "Avoid waiting for checks before opening the first pull request",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "416ccef536f99596ab3403cebc9c12f1eb3262b0ff6bb0b8ae71e2ef6b70f40c",
+    "changed": "c266c22bf360cf7510b3b0879c7d5a592f09e2d0de671b77355a14110a9f6822",
+    "commit": "d88814b5afba2d4825a8a2c6954d39906dcd8fbd",
+    "dismissals": [],
+    "findings": [],
+    "id": "be118d2d-ceeb-40bd-9504-513e34b5dedf",
+    "status": "clean"
+  },
+  "round": 7,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-20T03:29:36.361890+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-20T03:29:45.348952+00:00",
+      "round": 1,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T04:11:26.663750+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-20T04:12:01.468967+00:00",
+      "round": 2,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T05:02:29.578871+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-20T06:34:17.714252+00:00",
+      "round": 3,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T16:56:31.683459+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-20T16:56:31.702354+00:00",
+      "round": 3,
+      "step": "hold"
+    },
+    {
+      "at": "2026-11-20T16:57:25.659861+00:00",
+      "by": "owner",
+      "choice": "more",
+      "round": 3,
+      "step": "owner decision"
+    },
+    {
+      "at": "2026-11-20T16:57:38.912431+00:00",
+      "round": 4,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T17:54:47.868755+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-20T17:54:47.892874+00:00",
+      "round": 4,
+      "step": "hold"
+    },
+    {
+      "at": "2026-11-20T17:55:56.509623+00:00",
+      "by": "owner",
+      "choice": "accept",
+      "round": 4,
+      "step": "owner decision"
+    },
+    {
+      "at": "2026-11-21T04:26:25.370990+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-21T05:35:34.449708+00:00",
+      "round": 5,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-21T05:58:37.677726+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-21T05:58:37.705832+00:00",
+      "round": 5,
+      "step": "hold"
+    },
+    {
+      "at": "2026-11-21T05:59:38.585080+00:00",
+      "by": "owner",
+      "choice": "more",
+      "round": 5,
+      "step": "owner decision"
+    },
+    {
+      "at": "2026-11-21T05:59:50.721860+00:00",
+      "round": 6,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-21T06:12:32.424444+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-21T06:57:55.705354+00:00",
+      "round": 7,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-21T07:03:27.752949+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-21T05:58:37.705832+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/templates/review-tests.py",
+    "reason": "Owner chose on 21 Nov 2026: fix the wait for checks that never start (finding 2); finding 1 (merging two record branches) is accepted as a known issue",
+    "wait_id": "b7c7ed3b-210a-43c3-9b1d-265385f71ff2",
+    "worker_round": 5
+  },
+  "stuck": {
+    "close": "050a2b96-416b-4677-92c3-f445d7db111d",
+    "head": "6cab1e9cb90ee324cea4654e003f3b1c62ae9c83",
+    "keys": {},
+    "round": 6
+  },
+  "why": "Issue 1723: during forge close, Forge's own record commits (review result, owner choice, stuck/fixing) are pushed while the pull request's test groups are queued or running; the generated workflow cancels in-progress pull_request runs, so each record push throws away the running tests and all groups restart on unchanged code (one client night: 25 of 44 runs cancelled, 50 of 55 cancels caused by record pushes)",
+  "worker": "codex"
+}
