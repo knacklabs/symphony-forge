@@ -78,6 +78,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/review.py\tThe incoming review module exceeds the 1,200-line limit and fails the required cheap check.",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 1202,
+      "text": "The incoming review module exceeds the 1,200-line limit and fails the required cheap check.",
+      "from": "worker",
+      "item": "rerun-only-infra-errors",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_grouped_full_run_retries_failed_files.py\tGate: Grouped retry proofs do not check the unfinished sibling\trerun-only-infra-errors",
       "kind": "bug",
       "path": "tests/test_grouped_full_run_retries_failed_files.py",
