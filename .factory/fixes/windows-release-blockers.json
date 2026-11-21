@@ -18,7 +18,7 @@
       "gain": 5,
       "harm": 3,
       "line": 1007,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -31,7 +31,7 @@
       "gain": 3,
       "harm": 3,
       "line": 214,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -54,34 +54,13 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "50b33254c272de681af40f6d5d28e616134299e289484da836125929aed69abf",
-    "changed": "efc4898bfd1b0e163c1de6f581bc85e60358ae1811cd8d93578fac1d4af4aa8a",
-    "commit": "464f0196d1e4f974fcaf44a6d2508cf71aa152e2",
+    "branch_diff": "1eb075ddb4e706dca7e0ba22d457f40d41d6aeb98a506da46c78bdbf8d7e22e8",
+    "changed": "4188e4a7ba5f57325161ec2d6c64c270e452984d84dcb80a2e38246a58d03910",
+    "commit": "feab97d54d56fa901250875f16d179f341befaf6",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 5, Work 3, Harm 3\nRaise: Not done\nCase: normal use - A Windows user starts merge in the item's worktree with Forge v1.2.45, and refreshing the base changes the Forge pin.\nThe new chdir runs only in the selected release. The already-running v1.2.45 parent still waits in the worktree, and its `publish_on_exit` still calls `current_branch` if the folder remains. The base release's `src/forge/repo.py:993` and `src/forge/checks.py:63` show those older paths. If Git removes the worktree registration but leaves the locked folder, that parent replaces the successful merge with `git branch failed: not a git repository`.\nThe Windows workflow proof is also missing: the supplied proof list says no branch run exists, and `.github/workflows/forge-next.yml:81` runs its Windows tests only on schedule or manual dispatch, not as a pull-request check.\nDone-when item: forge merge started inside the item's worktree ends with exit 0 on Windows after it merges, and test_9 of the record-only test no longer fails on Windows; forge-next.yml's Windows jobs pass on the fix branch.",
-        "file": "src/forge/repo.py",
-        "gain": 5,
-        "harm": 3,
-        "line": 1007,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: Windows merge after a pin change and the Windows workflow",
-        "work": 3
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - A merge crosses a pin change from an already released Forge version.\nThe test's `_earlier_release(env)` call uses `tests/test_running_commands_follow_changed_forge_pin.py:23`, which copies the current source and changes its version rather than using the prior release's code. Its simulated parent therefore already contains both the new chdir and the new exit-flush guard. The added launcher can exercise an empty folder, but this test passes while the real v1.2.45 parent still fails after the merge, so it does not prove the named release-handoff behavior.",
-        "file": "tests/test_merge_refreshes_behind_base.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 214,
-        "priority": "P1",
-        "title": "Gate: the merge recovery test uses the repaired code as the earlier release",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - A Windows developer installs Git for Windows with Scoop and runs the platform tests.\nScoop exposes `git.exe` through a shim while its Git installation contains Bash; see [Scoop's Git package](https://github.com/ScoopInstaller/Main/blob/master/bucket/git.json) and its [shim contract](https://github.com/ScoopInstaller/Shim). Resolving the shim path does not resolve its target, so this search checks the shim's ancestors, misses the installed `bin/bash.exe`, and skips test_9 despite usable Git Bash being present. The recorded allowance permits skipping this case only when no usable Bash exists, and the skip leaves the shared-history rule unchecked on that setup.",
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - A Windows user named Jos\u00e9 installs Git with Scoop under their profile and runs the tests with Python 3.11 using the Windows cp1252 code page.\nGit reports its executable path in UTF-8, but `text=True` decodes it using Python's locale encoding. The profile name is therefore garbled, so the ancestor search misses the installed Bash and skips test_9 despite Bash being available. The shared-history rule remains unchecked on that Scoop setup. Read Git's output as UTF-8. See [Git's Windows path conversion](https://github.com/git/git/blob/master/exec-cmd.c#L172-L186) and the [Python subprocess documentation](https://docs.python.org/3.11/library/subprocess.html).",
         "file": "tests/test_record_only_failed_results.py",
         "gain": 3,
         "harm": 3,
@@ -91,11 +70,11 @@
         "work": 1
       }
     ],
-    "id": "84102149-fcf3-4a52-b010-a1b2f9cf7f91",
+    "id": "206e5990-9373-4787-820e-e6074523f005",
     "status": "blocked"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-21T08:23:53.540577+00:00",
@@ -114,8 +93,22 @@
       "at": "2026-11-21T09:03:13.613790+00:00",
       "round": 2,
       "step": "resume"
+    },
+    {
+      "at": "2026-11-21T09:16:33.684580+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-21T09:16:33.700759+00:00",
+      "round": 2,
+      "step": "hold"
     }
   ],
+  "stop": {
+    "at": "2026-11-21T09:16:33.700759+00:00",
+    "file": "tests/test_record_only_failed_results.py",
+    "wait_id": "45df85f5-242a-46f6-bf8f-67441e3bd3cd"
+  },
   "stuck": {
     "close": "6756f0db-d277-480f-ad39-c112f187f3aa",
     "head": "e6b08e87aa43fd158f27bb2476df06571146c136",
