@@ -78,8 +78,8 @@ if args[:4] == ["api", "--paginate", "--jq", ".check_runs[]"]:  # a branch's own
     own = here / ("checks-" + branch.replace("/", "-") + ".txt")
     if own.exists():
         answer(own.read_text())
-if args[:2] == ["api", "graphql"] and "operationName=ForgeDefaultTests" not in args:
-    # The board's open pull requests; default test results use a separate query.
+if args[:2] == ["api", "graphql"]:
+    # The board's open pull requests.
     nodes = []
     for path in sorted(here.glob("pr-*.json")):
         found = pr(json.loads(path.read_text("utf-8"))["headRefName"])
