@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import GH_STUB, _install, patient
+from conftest import FORGE_SHIM, GH_STUB, ROOT, _install, patient
 from test_close import GREEN, env  # noqa: F401
 from test_setup import _fresh_client
 from test_running_commands_follow_changed_forge_pin import _earlier_release
@@ -206,8 +206,33 @@ def test_2_behind_recovery_finishes_close_under_the_upgraded_pin_before_retrying
         env, tmp_path, monkeypatch, previous, command, failing_test):
     test_log = _client(env, tmp_path, previous, fast_test=False)
     current = env.repo.forge("--version").stdout.split()[-1]
+    prefix, patch = current.rsplit(".", 1)
+    following = f"{prefix}.{int(patch) + 1}"
+    # Reuse the release-acquisition harness, but run this checkout's actual CLI
+    # as the parent. Only the selected future release gets a different version.
     _earlier_release(env)
-    monkeypatch.setenv("FORGE_PINNED_RUN", "v1.2.2")
+    selected = env.tmp / "earlier-source"
+    for name in ("repo.py", "review.py", "__init__.py"):
+        shutil.copy2(ROOT / "src/forge" / name, selected / "forge" / name)
+    version = selected / "forge" / "__init__.py"
+    version.write_text(version.read_text("utf-8").replace(
+        current.removeprefix("v"), following.removeprefix("v")), encoding="utf-8")
+    _install(env.repo.bin, "forge", FORGE_SHIM.format(
+        python=sys.executable, src=(ROOT / "src").as_posix()))
+    _install(env.tmp / "current-bin", "forge", FORGE_SHIM.format(
+        python=sys.executable, src=selected.as_posix()))
+    # Windows can retain the removed checkout's empty folder while a parent waits
+    # there. Reproduce that filesystem state on other hosts at the release edge.
+    # The real merge still decides the result and removes the Git registration.
+    launcher = env.repo.bin / "uv"
+    launcher.write_text(launcher.read_text("utf-8").replace(
+        json.dumps((ROOT / "src").as_posix()), json.dumps(selected.as_posix())).replace(
+        "sys.exit(main())", """checkout = pathlib.Path.cwd()
+status = main()
+if status == 0 and args[5] in {"merge", "land"}:
+    checkout.mkdir(exist_ok=True)
+sys.exit(status)"""), encoding="utf-8")
+    monkeypatch.setenv("FORGE_PINNED_RUN", current)
     _, prepared = env.start("repin-client", "fix/repin-client",
                             ".factory/fixes/repin-client.json",
                             {"kind": "fix", "why": "Run the earlier release",
@@ -215,7 +240,7 @@ def test_2_behind_recovery_finishes_close_under_the_upgraded_pin_before_retrying
     config = (prepared / "forge.toml").read_text("utf-8")
     config = re.sub(r'^test_place = .*\n', '', config, flags=re.M)
     config = 'test_place = "local"\n' + config
-    config = re.sub(r'version = "[^"]+"', 'version = "v1.2.2"', config)
+    config = re.sub(r'version = "[^"]+"', f'version = "{current}"', config)
     config = re.sub(r'^fast_test = .*\n', '', config, flags=re.M)
     env.commit(prepared, "forge.toml", config)
     env.repo.git("merge", "-q", "--ff-only", "fix/repin-client")
@@ -229,11 +254,13 @@ def test_2_behind_recovery_finishes_close_under_the_upgraded_pin_before_retrying
     first_head = env.repo.git("rev-parse", "HEAD", cwd=where)
     before_reviews = len(env.review_calls())
     reviewed_head = env.review_calls()[-1]["head"]
-    upgraded = config.replace('version = "v1.2.2"',
-                              f'version = "{current}"\nfast_test = "python verify.py"')
+    upgraded = config.replace(f'version = "{current}"',
+                              f'version = "{following}"\nfast_test = "python verify.py"')
     _github_moves_default(env, False, "BEHIND", upgraded, failing_test)
 
     done = env.repo.forge(command, item, cwd=where)
+
+    assert f"Forge pin changed from {current} to {following}" in done.stdout
 
     attempts = env.gh_calls("pr", "merge")
     resumed = [entry["args"][5:] for line in
@@ -273,8 +300,10 @@ def test_2_behind_recovery_finishes_close_under_the_upgraded_pin_before_retrying
     assert env.repo.git("show", "origin/main:forge.toml") == upgraded.strip()
     assert env.repo.git("show", "origin/main:README.md") == (
         "Branch greeting\n\nKeep this paragraph.\n\nOther closing")
-    if sys.platform == "win32" and where.exists():
+    if sys.platform == "win32" and "Forge could not fully remove its worktree at " in done.stdout:
         # Windows keeps a folder a waiting process is in; the merge still finishes and says so.
         assert f"Merged {item}. Forge could not fully remove its worktree at " in done.stdout
     else:
-        assert not where.exists()
+        # The release launcher recreates only the empty folder, never a checkout.
+        assert where.is_dir()
+        assert not list(where.iterdir())
