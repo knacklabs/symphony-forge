@@ -57,7 +57,7 @@
       "gain": 4,
       "harm": 3,
       "line": 819,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -70,7 +70,7 @@
       "gain": 3,
       "harm": 3,
       "line": 320,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -80,34 +80,23 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "3a469f82ac2c97676990362a22214d1229cad57447990c8d880d636ffc9d8b69",
-    "changed": "ac7cc5f5571066d01a6f85a0922ce2d06ed22990461d5481bbd53a0acad6a69b",
-    "commit": "87dc75d10e589ee8478f494cf51342d3c2bb0bbf",
+    "branch_diff": "7928d2b1be852a7ffbe2c45de1c86a7f3c8f308f05f559962ad1e41dd204cbb9",
+    "changed": "ca33e501613d68d35d407b65e622c761cf70572c8570eb891893087fb5c17b5f",
+    "commit": "87c9e1200da38680b8d86b54d1e0ffa5722e1856",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - A worker asks for a size allowance and also asks whether to replace the parser in the same handoff. The match finds `forge fix allow-large` anywhere in the recorded text, then ends the entire wait and clears the entire saved question. `worker.py:423-429` and `worker.py:447-450` show that a record can contain more than one question block. Recording the allowance therefore also removes the unanswered parser question, allowing close to proceed without that decision. The proof tests an unrelated question only when the allowance command is absent from the text.\nAdds work: retain separately unanswered questions; F 2 x H 2 = 4; 2 x C = 4",
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - A worker writes one Question paragraph asking whether it may replace the parser and also asking the coordinator to run `forge fix allow-large` for six files. `owner_choices.py:62-63` treats the whole paragraph as one block and removes it when the allowance command appears anywhere in it. Recording the allowance therefore also removes the unanswered parser decision, so close can proceed without it. The test at `tests/test_answered_worker_question.py:42-43` puts the questions in separately prefixed blocks and misses this case.\nAdds work: retain separately unanswered questions; F 2 x H 2 = 4; 2 x C = 4",
         "file": "src/forge/task.py",
         "gain": 4,
         "harm": 3,
-        "line": 819,
+        "line": 814,
         "priority": "P1",
         "title": "Preserve unrelated questions in the same worker handoff",
         "work": 2
       },
       {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nCase: normal use - A worker asks the coordinator to record an approved scope change with `forge fix amend`, and the coordinator runs that command. The owner-approved item is: \u201cOnce a worker's question is answered by a forge work --note round or by the step the question asks for (such as forge fix allow-large), close and next no longer report that question\u201d. The new handling covers only `allow-large`; `task.py:863-890` records an amendment without ending the worker wait, so `close.py:181-183` still refuses and next still shows the question. The named proof covers a note and an allowance but no other requested step.",
-        "file": "src/forge/task.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 815,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: Other requested commands leave answered questions open",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nCase: normal use - A worker asks on an existing pull request and a teammate answers or records the allowance from another clone. The owner-approved item is: \u201cOnce a worker's question is answered by a forge work --note round or by the step the question asks for (such as forge fix allow-large), close and next no longer report that question\u201d. This call passes an empty PR record, and the following `wait_records` call also omits the PR body, so an allowance recorded on the second machine cannot find the shared question or publish its end. Conversely, a `--note` answer publishes an end in `worker.py:235-242`, but close on the original machine still reads its stale local question before loading the PR (`close.py:181-188`). The new test uses one clone and no existing PR.",
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nCase: normal use - A worker on an existing pull request lists six long file paths and puts `forge fix allow-large` after the list, as the brief suggests. `time_records.py:769-785` truncates the shared question to 300 characters. If the command falls beyond that limit, `owner_choices.py:58-65` cannot match it on the teammate's clone, so recording the allowance publishes no wait end and the original machine still reports the answered question. The shared test uses a short question. Even when a shorter question matches, `task.py:819` and `task.py:893` publish the wait end without pushing the allowance or amendment commit: `close.py:638-645` defaults to `push=False`. The original clone can consequently clear the question while still lacking the approved allowance or revised Done-when.",
         "file": "src/forge/task.py",
         "gain": 3,
         "harm": 3,
@@ -118,31 +107,22 @@
         "work": 2
       },
       {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - The worker follows `brief.md:258-263` and asks for a size allowance before making any edits. Clearing its question leaves the item in `working` after a completed worker round, so `nextstep.py:1100-1109` recommends `forge close`; close then refuses because the fix has no product changes (`close.py:304-307` and `task.py:845-846`). The coordinator must discover and run the necessary build round after following the wrong next step. The new test commits `parser.py` before asking the question, so it misses the documented pre-build flow.\nAdds work: direct an unbuilt fix back to work; F 2 x H 2 = 4; 2 x C = 4",
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nCase: normal use - A worker asks the coordinator to record an owner's approval with `forge decision accept <slug> --by <name>`, and the coordinator runs that command on the fix branch. The Done-when covers the step the question asks for, but this change invokes `answer_command` only for `forge fix allow-large` and `forge fix amend`. `records.py:259-383` accepts and commits the decision without ending the worker wait, so close and next continue to report the answered question.",
         "file": "src/forge/task.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 819,
-        "priority": "P1",
-        "title": "Resume an unbuilt fix after its size allowance",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Functional\nCase: normal use - A task worker names the newly documented `forge task allow-large` in its question and the coordinator follows it. `cli.py:25-30` and `task.py:1031-1056` register only `forge fix allow-large`, so the task form is rejected before any allowance is recorded and the question remains open. The new test exercises only the fix form.",
-        "file": "src/forge/templates/brief.md",
         "gain": 3,
         "harm": 3,
-        "line": 320,
+        "line": 889,
         "priority": "P1",
-        "title": "Remove the nonexistent task allowance command from the brief",
-        "work": 1
+        "required_done_when": true,
+        "title": "Not done: Other requested commands leave answered questions open",
+        "work": 2
       }
     ],
-    "id": "43feabb6-2c1c-4432-baba-b890662c6cf2",
+    "id": "cdcf2a44-302c-4f0c-8fa2-66b2db813b8f",
     "status": "blocked"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-21T13:18:42.684269+00:00",
@@ -161,8 +141,22 @@
       "at": "2026-11-21T13:31:11.834062+00:00",
       "round": 2,
       "step": "resume"
+    },
+    {
+      "at": "2026-11-21T13:47:05.088843+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-21T13:47:05.105659+00:00",
+      "round": 2,
+      "step": "hold"
     }
   ],
+  "stop": {
+    "at": "2026-11-21T13:47:05.105659+00:00",
+    "file": "src/forge/task.py",
+    "wait_id": "e86d798a-6467-4048-901f-4e8bc0b1a015"
+  },
   "stuck": {
     "close": "ea05a4e2-8379-4b58-b592-46fe6b5f0feb",
     "head": "01ee9400d3b96e01c5e9b0c3165ea61c2f93a08b",
