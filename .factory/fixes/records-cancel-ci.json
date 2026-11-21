@@ -202,7 +202,7 @@
     "id": "d66124fe-5f68-4e52-91c6-efe3cb8eab42",
     "status": "blocked"
   },
-  "round": 5,
+  "round": 6,
   "status": "fixing",
   "steps": [
     {
@@ -293,6 +293,11 @@
       "choice": "more",
       "round": 5,
       "step": "owner decision"
+    },
+    {
+      "at": "2026-11-21T05:59:50.721860+00:00",
+      "round": 6,
+      "step": "resume"
     }
   ],
   "stop": {
@@ -305,10 +310,10 @@
     "worker_round": 5
   },
   "stuck": {
-    "close": "d672d45c-01f9-45f6-a4f6-6b51401e50dc",
-    "head": "61a73ad7d757b5cf857a4b07b50b7a7725a2bd43",
+    "close": "07cedd48-ffbb-49ae-b8e6-35c0eb0172ce",
+    "head": "9d47cb60e721c31059e1ea34ded215f2f3dfa197",
     "keys": {},
-    "round": 4
+    "round": 5
   },
   "why": "Issue 1723: during forge close, Forge's own record commits (review result, owner choice, stuck/fixing) are pushed while the pull request's test groups are queued or running; the generated workflow cancels in-progress pull_request runs, so each record push throws away the running tests and all groups restart on unchanged code (one client night: 25 of 44 runs cancelled, 50 of 55 cancels caused by record pushes)",
   "worker": "codex"
