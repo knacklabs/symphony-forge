@@ -55,10 +55,14 @@ def _round_client(repo, gh, tmp_path, monkeypatch, mode, effort="low", task="HEL
                      'models.grill.claude = { model = "claude-sonnet-5-5", effort = "medium" }\n'
                      'models.design.codex = { model = "gpt-6.1-sol", effort = "medium" }\n'
                      'models.design.claude = { model = "claude-sonnet-5-5", effort = "medium" }\n')
+    # Work now runs this command before close. Fixed-effort cases need a real
+    # passing command rather than an absent file that asks the model to repair it.
+    test_script = "print('round test passed')\n"
     if history == "new":
         client = tmp_path / "client"
         client.mkdir()
         (client / "forge.toml").write_text(settings, encoding="utf-8")
+        (client / "fail_test.py").write_text(test_script, encoding="utf-8")
         client, initialized = _fresh_client(repo, gh, tmp_path)
         assert initialized.returncode == 0, initialized.stdout + initialized.stderr
         repo.path = client
@@ -68,6 +72,7 @@ def _round_client(repo, gh, tmp_path, monkeypatch, mode, effort="low", task="HEL
         fixture = Path(__file__).parent / "fixtures/adopted-v1.2.2/client"
         shutil.copytree(fixture, repo.path, dirs_exist_ok=True)
         repo.write("forge.toml", settings)
+        repo.write("fail_test.py", test_script)
         repo.git("add", "-A")
         repo.git("commit", "-q", "-m", "Use an adopted client repo")
         repo.git("push", "-q", "origin", "main")
@@ -129,13 +134,18 @@ def test_1_a_failed_round_runs_at_top_effort_in_the_same_thread(
         monkeypatch.delenv("CLAUDECODE", raising=False)
     settings_before = (folder / "forge.toml").read_bytes()
     model = "claude-sonnet-5-5" if family == "claude" else "gpt-6.1-sol"
-    commit_env = "STUB_CLAUDE_COMMIT_FROM" if family == "claude" else "STUB_CODEX_COMMIT_FROM"
-    monkeypatch.setenv(commit_env, "1")
     (folder / "web/help.py").parent.mkdir(parents=True, exist_ok=True)
     (folder / "web/help.py").write_text("HELP = 'first round'\n", encoding="utf-8")
     test_text = ("print('intentional failed close test')\nraise SystemExit(1)\n"
                  if failure == "test" else "print('close test passed')\n")
     (folder / "fail_test.py").write_text(test_text, encoding="utf-8")
+    if family == "claude":
+        # A repair with no edits must not ask the Claude stub for an empty commit.
+        repo.git("add", "-A", cwd=folder)
+        repo.git("commit", "-qm", "Prepare the round input", cwd=folder)
+    else:
+        # The Codex service also writes approval receipts during its first turn.
+        monkeypatch.setenv("STUB_CODEX_COMMIT_FROM", "1")
     if failure == "note":
         question = "Question: Should I keep the existing parser?"
         monkeypatch.setenv("STUB_CLAUDE_RESULT" if family == "claude" else "STUB_CODEX_TEXT",
@@ -177,12 +187,23 @@ def test_1_a_failed_round_runs_at_top_effort_in_the_same_thread(
         elif failure in ("required-check", "required-matrix-check"):
             assert "tests" in closed.stdout + closed.stderr
 
-    monkeypatch.delenv(commit_env, raising=False)
+    if family == "codex":
+        monkeypatch.delenv("STUB_CODEX_COMMIT_FROM", raising=False)
     retried = repo.forge("work", "BOARD/HELP", *( ["--note", "Keep the existing parser."]
                                                   if failure == "note" else []))
     assert retried.returncode == 0, retried.stdout + retried.stderr
     if family == "claude":
-        [initial, retry] = calls(log)
+        turns = calls(log)
+        if failure == "test":
+            # Each red laptop run now gets one repair turn within the same round.
+            initial, first_repair, retry, second_repair = turns
+            for original, repair, chosen_effort in (
+                    (initial, first_repair, effort), (retry, second_repair, expected_effort)):
+                assert repair["session_id"] == original["session_id"]
+                assert repair["options"]["effort"] == chosen_effort
+                assert "intentional failed close test" in repair["brief"]
+        else:
+            [initial, retry] = turns
         assert initial["session_id"] == retry["session_id"]
         assert (initial["options"]["model"], initial["options"]["effort"]) == (model, effort)
         assert (retry["options"]["model"], retry["options"]["effort"]) == (model, expected_effort)
@@ -190,7 +211,18 @@ def test_1_a_failed_round_runs_at_top_effort_in_the_same_thread(
         from test_codex_worker import _sent
 
         [initial] = _sent(log, "thread/start")
-        [retry] = _sent(log, "thread/resume")
+        resumes = _sent(log, "thread/resume")
+        if failure == "test":
+            first_repair, retry, second_repair = resumes
+            for repair, chosen_effort in ((first_repair, effort), (second_repair, expected_effort)):
+                assert repair["threadId"] == retry["threadId"]
+                assert repair["config"]["model_reasoning_effort"] == chosen_effort
+            repairs = _sent(log, "turn/start")[1::2]
+            assert len(repairs) == 2
+            assert all("intentional failed close test" in turn["input"][0]["text"]
+                       for turn in repairs)
+        else:
+            [retry] = resumes
         conversation = re.search(r'Codex conversation "BOARD · The help": (.+)', first.stdout)[1]
         assert retry["threadId"] == conversation
         assert (initial["config"]["model"], initial["config"]["model_reasoning_effort"]) == (
@@ -207,7 +239,8 @@ def test_1_a_failed_round_runs_at_top_effort_in_the_same_thread(
     starts = [event for event in events if event.get("item") == "BOARD/HELP"
               and event.get("event") == "run start" and event.get("kind") in ("work", "worker")]
     assert [(event["round"], event["effort"]) for event in starts] == [
-        (1, effort), (2, expected_effort)]
+        (number, chosen_effort) for number, chosen_effort in ((1, effort), (2, expected_effort))
+        for _ in range(2 if failure == "test" else 1)]
     assert (folder / "forge.toml").read_bytes() == settings_before
 
 
@@ -314,6 +347,7 @@ def test_5_effort_none_is_never_sent(
     assert started.returncode == 0, started.stdout + started.stderr
     folder = Path(started.stdout.splitlines()[0].rsplit(" in ", 1)[1])
     item = "raise-effort-after-failure"
+    env.commit(folder, "fail_test.py", "print('round test passed')\n", "Add the fix round test")
     before = (folder / "forge.toml").read_bytes()
     first = repo.forge("work", item)
     assert first.returncode == 0, first.stdout + first.stderr
@@ -406,6 +440,14 @@ def test_8_native_round_names_the_requested_effort(
                                  "--subagent", "worker-session", "--text", "Built it.",
                                  cwd=folder)
         assert handed_back.returncode == 0, handed_back.stdout + handed_back.stderr
+        assert "Send this to subagent worker-session, then hand back again:" in handed_back.stdout
+        assert "intentional native close failure" in handed_back.stdout
+        # A red laptop check deliberately keeps the native round open for one repair.
+        handed_back = host.forge("handback", "BOARD/HELP", "--round", first_round,
+                                 "--subagent", "worker-session", "--text", "The test still fails.",
+                                 cwd=folder)
+        assert handed_back.returncode == 0, handed_back.stdout + handed_back.stderr
+        assert "Send this to subagent" not in handed_back.stdout
         assert calls(log) == before
 
         closed = env.close("BOARD/HELP")
@@ -425,6 +467,12 @@ def test_8_native_round_names_the_requested_effort(
                                  "--subagent", "worker-session", "--text", "Still working.",
                                  cwd=folder)
         assert handed_back.returncode == 0, handed_back.stdout + handed_back.stderr
+        assert "Send this to subagent worker-session, then hand back again:" in handed_back.stdout
+        handed_back = host.forge("handback", "BOARD/HELP", "--round", second_round,
+                                 "--subagent", "worker-session", "--text", "The test still fails.",
+                                 cwd=folder)
+        assert handed_back.returncode == 0, handed_back.stdout + handed_back.stderr
+        assert "Send this to subagent" not in handed_back.stdout
 
         events = [json.loads(line) for line in
                   (repo.path / ".git/forge/events.jsonl").read_text("utf-8").splitlines()]

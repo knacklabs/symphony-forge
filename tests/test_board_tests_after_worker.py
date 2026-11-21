@@ -31,6 +31,9 @@ def test_13_close_tests_after_worker_exit_show_tests_running(
     env.commit(repo.path, "forge.toml", settings)
     server, connections = release_server
     configure(env, server)
+    env.commit(repo.path, ".gitignore", (repo.path / ".gitignore").read_text("utf-8")
+               + "\ntest-started.json\ntest-started.tmp\n", "Ignore test diagnostics")
+    repo.git("push", "-q", "origin", "main")
     env.checks(GREEN)
     install_claude(repo)
     monkeypatch.setenv("STUB_CLAUDE_LEAVE", "product.txt")
@@ -40,11 +43,18 @@ def test_13_close_tests_after_worker_exit_show_tests_running(
                       "--slug", item)
     assert made.returncode == 0, made.stdout + made.stderr
     folder = worktree(repo, "fix/" + item)
-    worked = repo.forge("work", item)
-    assert worked.returncode == 0, worked.stdout + worked.stderr
-    assert json.loads((folder / f".factory/fixes/{item}.json").read_text("utf-8"))["status"] == "working"
     processes = []
     try:
+        # Work now runs the client's check too. Finish that laptop check before
+        # observing the separate close check after the worker has exited.
+        working, work_output = start(repo.path, tmp_path / "working", repo, "work", item)
+        processes.append(working)
+        connection, _ = accepted(server, connections, folder, working, work_output)
+        connection.sendall(b"x")
+        assert working.wait(timeout=120) == 0, work_output.read_text("utf-8")
+        assert "Related tests passed." in work_output.read_text("utf-8")
+        assert json.loads((folder / f".factory/fixes/{item}.json").read_text("utf-8"))["status"] == "working"
+        (folder / "test-started.json").unlink()
         closing, output = start(repo.path, tmp_path / "closing", repo, "close", item)
         processes.append(closing)
         connection, _ = accepted(server, connections, folder, closing, output)
