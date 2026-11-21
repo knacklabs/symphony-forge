@@ -38,7 +38,7 @@
       "gain": 4,
       "harm": 3,
       "line": 584,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -51,7 +51,7 @@
       "gain": 3,
       "harm": 3,
       "line": 621,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -64,7 +64,7 @@
       "gain": 4,
       "harm": 3,
       "line": 336,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -77,7 +77,7 @@
       "gain": 4,
       "harm": 3,
       "line": 352,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -90,7 +90,7 @@
       "gain": 3,
       "harm": 3,
       "line": 621,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -103,7 +103,7 @@
       "gain": 3,
       "harm": 3,
       "line": 64,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -113,84 +113,24 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "2c3240bc5b90d1316ed63ac9e79ba067fad8774a52ab51f326371a2883c2e695",
-    "changed": "dc0e27e2ce27dd4159ed57fb39c24af042e407bb95f5aca55c731fed5bd62be1",
-    "commit": "79b5b5ef5a72c3629a0b73b0d3d409186b4ffd76",
+    "branch_diff": "98d941df9fe121bcc1a6839ce18901bad003561e53e6c9ab64eabd764653d408",
+    "changed": "7ad7cf3d076468cbf120a3b3c782415f17ab3cd0061c309ace05c0056e486a8a",
+    "commit": "f79f65462416b348a1ffa1e16589447fb3042790",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 5, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a test group has a fixture error and a timed-out test, or a job is cancelled after reporting an assertion failure.\nFor a failed job, `_infrastructure` accepts a pytest timeout alongside an `ERROR ... - RuntimeError` setup failure because its exclusion only recognizes selected assertion formats. For cancelled or timed-out jobs, line 350 skips the log check entirely. Forge can therefore rerun a job that already reported a product failure and turn it green. The mixed-failure proof covers an `AssertionError` in a job whose conclusion is `failure`, so it misses both cases.\nDone when: Close, land and the CI test step rerun a failed job or failed test files only when the failure is a runner loss, cancellation or timeout, never when a test fails its check; a test that passes only on a rerun is still reported as flaky as today; new repos get it at init and existing repos on upgrade and forge sync",
+        "body": "Gain 5, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a pytest group reports an assertion failure, then a later test hangs until the job is cancelled or times out.\nForge's test command uses `-q` (`forge.toml:6`), so pytest can report the failed test as `F` while deferring its traceback until the session ends ([pytest output documentation](https://docs.pytest.org/en/latest/how-to/output.html)). If the job ends before that summary, `_product_failure` does not recognize the failure marker, and `_restart` accepts the cancellation or timeout and reruns the job. A transient assertion can then pass on retry and leave CI green. The cancellation proof in `tests/test_ci_retries_failed_test_jobs.py:60` supplies a complete `AssertionError` traceback, so it misses this case.",
         "file": "src/forge/land.py",
         "gain": 5,
         "harm": 3,
-        "line": 350,
+        "line": 333,
         "priority": "P1",
         "required_done_when": true,
         "title": "Not done: Mixed infrastructure and product failures still retry",
         "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - an xdist worker is lost while running a suite whose fixtures or tests depend on worker state.\nThe new interrupted-run path retains the original test arguments but still forces `config.option.dist = \"no\"` at line 588. The retry consequently runs in the controller rather than an xdist worker. For example, the supported fixture pattern in `tests/test_close_runs_only_related_tests.py:43` accesses `request.config.workerinput` and fails on this retry; tests conditional on worker state can instead be skipped and leave unfinished checks unverified. This does not replay the original invocation as the recorded worker-loss ruling requires.",
-        "file": "src/forge/fasttest.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 584,
-        "priority": "P1",
-        "title": "Functional: Preserve worker execution when retrying a lost pytest worker",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Functional\nCase: normal use - a pytest fixture times out during setup or teardown using the signal timeout method.\nThe timeout-message exception applies regardless of `report.when`, so these failed fixture reports do not enter `PRODUCT_FAILURES` and their files are retried. A fixture that succeeds on the second attempt can therefore make the run green, contrary to the recorded ruling that any setup or teardown failure stops without retry. pytest-timeout applies its timer to fixture phases as well as the test body, and the new timeout tests exercise only the body.",
-        "file": "src/forge/fasttest.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 621,
-        "priority": "P1",
-        "title": "Functional: Leave timed-out setup and teardown failures red",
-        "work": 1
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - one generated CI test group suffers an infrastructure failure during `forge land --all`.\nThe generated workflow has a separate `tests` aggregate which fails whenever a group fails (`src/forge/prcheck.py:122-137`). Its log contains the aggregate's failed shell check, not the group's infrastructure message. `_red` passes both logs to this branch of `_restart`, which requires every log to contain infrastructure evidence and therefore refuses the retry. The job-list branch already skips this aggregate, but the combined-run proof's fake omits it, so that proof still passes while a real train falls back to individual checks.",
-        "file": "src/forge/land.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 336,
-        "priority": "P1",
-        "title": "Functional: Do not reject the generated aggregate when a train retries a failed group",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - GitHub loses a hosted or self-hosted runner during a test group.\nThe ruling to reuse failed-job logs did not account for an observed complete disconnect where GitHub records the loss only in an annotation, leaving no corresponding message in the job log ([GitHub report](https://github.com/orgs/community/discussions/124000)). This code reads only `--log-failed`, so it refuses the promised retry. The expressions at lines 322-324 also miss GitHub's `The self-hosted runner: ... lost communication` and `The job has exceeded the maximum execution time` wording; the tests supply different invented log strings.",
-        "file": "src/forge/land.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 352,
-        "priority": "P1",
-        "title": "Functional: Recognize GitHub's actual runner-loss evidence",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional\nCase: normal use - an existing client keeps a lockfile with pytest-timeout 2.3.1 and uses its default POSIX signal timeout.\nThe full match accepts only the message introduced in pytest-timeout 2.4. Version 2.3.1 raises `Failed: Timeout >...s` instead ([plugin source](https://github.com/pytest-dev/pytest-timeout/blob/2.3.1/pytest_timeout.py#L449-L465)), so Forge marks a genuine timeout as a product failure and stops without the prior retry. The job-log expression in `src/forge/land.py:324` has the same limitation. Forge keeps existing clients' test dependencies and lockfiles on upgrade.",
-        "file": "src/forge/fasttest.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 621,
-        "priority": "P1",
-        "title": "Functional: Retain timeout retries for existing pytest-timeout installations",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Test\nCase: normal use - a timed-out test has another test in the same file, or a worker dies before running that sibling.\nBoth this test and `tests/test_grouped_change_run_retries_failed_files.py:64` now count only occurrences of `failed` in the file receipt; neither asserts that `sibling` runs. They therefore pass if a timeout retry executes only the failed node instead of the promised failed file, or if the unfinished sibling is lost after worker recovery. The removed assertions checked that sibling execution, so the named proofs no longer establish the retry scope they claim.",
-        "file": "tests/test_grouped_full_run_retries_failed_files.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 64,
-        "priority": "P1",
-        "title": "Gate: Grouped retry proofs do not check the unfinished sibling",
-        "work": 1
       }
     ],
-    "id": "e5db9147-51db-481d-bcb6-8236c9551e87",
+    "id": "2fa93152-a009-4454-8791-2498ca3b8323",
     "status": "blocked"
   },
   "round": 3,
@@ -218,6 +158,10 @@
       "at": "2026-11-21T14:11:18.933074+00:00",
       "round": 3,
       "step": "resume"
+    },
+    {
+      "at": "2026-11-21T15:14:37.998102+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
