@@ -24,11 +24,13 @@ def test_1_each_new_stop_waits_for_and_records_its_own_choice(
     item, where = client_item(env, tmp_path, previous)
     number = 0
     for cycle, choice in enumerate((first, second)):
+        # More keeps the earlier blocker; accepted and split reviews start clean.
+        title = "New defect 1" if cycle == 0 or first == "more" else "New defect 3"
         # The first stop needs two blocked reviews; each owner's extra round adds one attempt.
         for blocked_round in range(2 if cycle == 0 else 1):
             number += 1
             env.commit(where, "app.py", f"print('round {number}')\n")
-            env.reviews(blocked({**finding("P1", f"New defect {number}", "app.py"),
+            env.reviews(blocked({**finding("P1", title, "app.py"),
                                  "body": "Gain 4, Work 1, Harm 2\nNormal saves lose work."}))
             result = env.close(item)
             assert result.returncode == 1, result.stdout + result.stderr

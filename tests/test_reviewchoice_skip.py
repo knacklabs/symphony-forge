@@ -190,9 +190,12 @@ def _later_change_gets_full_review(env):
     stale = env.repo.forge("next")
     assert stale.returncode == 0, stale.stderr
     assert f"The fix {item} is ready to merge." not in stale.stdout
-    env.reviews(CLEAN)
+    defect = finding("P1", "The later change loses the greeting")
+    env.reviews(blocked(defect))
     reviewed = env.close(item)
-    assert reviewed.returncode == 0, reviewed.stdout + reviewed.stderr
+    assert reviewed.returncode == 1, reviewed.stdout + reviewed.stderr
+    assert defect["title"] in reviewed.stderr
+    assert "Advice that does not block the merge:" not in reviewed.stdout
     assert len(env.review_calls()) == 1
     _assert_full_review(env, where)
     assert "Review: skipped by" not in body(env.gh_calls("pr", "edit")[-1])

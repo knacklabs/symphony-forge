@@ -51,14 +51,17 @@ def test_1_split_moves_every_open_finding_to_one_linked_fix(env, tmp_path, previ
         env.commit(where, "src/a.py", f"pass  # round {number}\n")
         env.commit(where, "app.py", f"print({number})\n")
         # Keep both split findings at the P1 bar.
-        defects = [{**finding("P1", f"Round {number} defect", "src/a.py"), "body": "Gain 4, Work 1, Harm 2\nEvidence for the open defect."}]
-        if number == last_round:
-            defects.append({**finding("P1", "Second split defect", "app.py"), "body": "Gain 4, Work 1, Harm 2\nEvidence for the second defect."})
+        defects = [
+            {**finding("P1", "Round 1 defect", "src/a.py"),
+             "body": "Gain 4, Work 1, Harm 2\nEvidence for the open defect."},
+            {**finding("P1", "Second split defect", "app.py"),
+             "body": "Gain 4, Work 1, Harm 2\nEvidence for the second defect."},
+        ]
         env.reviews(blocked(*defects, *([safe] if kind == "task" else [])))
         held = env.close(item)
         assert held.returncode == 1, held.stdout + held.stderr
         if number == 1 and kind == "task":
-            dismissed = env.close(item, "--dismiss", "2", "--because", "src/safe.py:1 This case is safe")
+            dismissed = env.close(item, "--dismiss", "3", "--because", "src/safe.py:1 This case is safe")
             assert dismissed.returncode == 1, dismissed.stdout + dismissed.stderr
     assert "Ask the human" in held.stderr, held.stdout + held.stderr
     branches = set(env.repo.git("branch", "--format=%(refname:short)").splitlines())
@@ -71,7 +74,7 @@ def test_1_split_moves_every_open_finding_to_one_linked_fix(env, tmp_path, previ
     name = branch.removeprefix("fix/")
     follow_up = json.loads(env.repo.git("show", f"{branch}:.factory/fixes/{name}.json"))
     for field in ("why", "done_when"):
-        for title, location in ((f"Round {last_round} defect", "src/a.py:1"),
+        for title, location in (("Round 1 defect", "src/a.py:1"),
                                 ("Second split defect", "app.py:1")):
             assert title in follow_up[field] and location in follow_up[field]
         assert "Proven safe" not in follow_up[field]

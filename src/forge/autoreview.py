@@ -14,6 +14,23 @@ from forge import machine, repo, score
 
 PRIORITIES = ("P0", "P1", "P2", "P3")
 TOKENS = ("input_tokens", "cached_input_tokens", "output_tokens", "reasoning_output_tokens")
+REPAIR_FOLLOWUP = "Follow-up: new finding below P0 in a repair review"
+
+
+def repair_findings(findings: list[dict[str, Any]], previous: dict[str, Any],
+                    history: list[dict[str, Any]]) -> None:
+    """Keep repair reviews on earlier findings, new P0s and mandatory gates."""
+    repair = previous.get("status") == "blocked" and not previous.get("skipped")
+    earlier = {score.identity(f["file"], f["title"]) for f in previous.get("findings", [])}
+    followups = {score.identity(f["file"], f["title"]) for old in history
+                 for f in old.get("findings", []) if f.get("follow_up") == REPAIR_FOLLOWUP}
+    for finding in findings:
+        title = re.sub(r"^\[P[0-3]\]\s*", "", finding["title"].strip())
+        key = score.identity(finding["file"], finding["title"])
+        if not score.holds(finding, "P0") and (key in followups or (repair and key not in earlier
+                and not score.MUST.match(title)
+                and not re.match(r"Gate\s*:", title, re.I))):
+            finding["follow_up"] = REPAIR_FOLLOWUP
 
 
 def generated_paths(tree: Path, start: str, head: str, paths: list[str]) -> set[str]:

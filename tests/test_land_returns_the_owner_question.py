@@ -27,8 +27,8 @@ def test_1_owner_choice_exits_with_findings_and_checks_then_resumes(env, tmp_pat
         assert "Then run `forge land <item>` again." in guide
     for number in (1, 2):
         env.commit(where, "app.py", f"print({number})\n")
-        # A P1 at the bar stops for the owner at round two.
-        defect = finding("P1", f"Saving loses the greeting, case {number}")
+        # The same unresolved P1 stops for the owner at round two.
+        defect = finding("P1", "Saving loses the greeting")
         defect["body"] = "Gain 4, Work 1, Harm 2\nReturning readers lose their greeting."
         env.reviews(blocked(defect))
         assert env.close(item).returncode == 1

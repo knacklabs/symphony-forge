@@ -31,7 +31,8 @@ def drop(top: Path, item: str, findings: list[dict[str, Any]]) -> list[dict[str,
         title = re.sub(r"^\[P[0-3]\]\s*", "", finding["title"].strip())
         missed = re.match(r"Not done\s*:\s*(.*)", title, re.I)
         said = sentence(missed[1]) if missed else ""
-        if ("/" in item and missed and not any(said in a or a in said for a in owned if a)
+        if (not score.holds(finding, "P0") and "/" in item and missed and not finding.get("follow_up")
+                and not any(said in a or a in said for a in owned if a)
                 and not any(p.search(finding["body"]) for p, _ in score.FLOORS[:2])):
             continue
         key = tuple(str(finding.get(k, "")).strip() for k in ("title", "file", "line", "body"))

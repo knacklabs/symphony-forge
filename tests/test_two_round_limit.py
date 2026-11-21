@@ -114,9 +114,9 @@ def test_4_round_two_reviews_only_round_one_findings_and_p0s_that_happen_in_norm
     if case == "p0":
         assert closed.returncode == 1 and new["title"] in closed.stderr, closed.stdout + closed.stderr
     else:
-        assert closed.returncode == 1, closed.stdout + closed.stderr
-        assert "reached the round limit with open findings" in closed.stderr
-        assert new["title"] in closed.stderr
+        assert closed.returncode == 0, closed.stdout + closed.stderr
+        assert "Ready:" in closed.stdout
+        assert new["title"] in published(env).split("Follow-ups:", 1)[1]
     assert len(env.review_calls()) == 2
     prompt = " ".join(env.prompt().split())
     assert old["title"] in prompt
