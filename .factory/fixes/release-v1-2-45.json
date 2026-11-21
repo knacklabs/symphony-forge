@@ -12,7 +12,7 @@
   "done_when": "Every version reference that names the current release says v1.2.45 (as the v1.2.44 release fix did, keeping v1.2.44 references used as a minimum release), the release version tests pass, and nothing else changes",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "round": 1,
+  "round": 2,
   "status": "working",
   "steps": [
     {
@@ -22,6 +22,11 @@
     {
       "at": "2026-11-20T15:12:39.828781+00:00",
       "round": 1,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-21T07:25:32.109148+00:00",
+      "round": 2,
       "step": "resume"
     }
   ],
