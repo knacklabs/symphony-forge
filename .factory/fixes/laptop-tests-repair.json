@@ -1,0 +1,15 @@
+{
+  "base": "36b55e1d116fba825974443fb40f30a4e64232d3",
+  "branch": "fix/laptop-tests-repair",
+  "done_when": "tests/test_effort_ladder.py and tests/test_board_tests_after_worker.py pass on main with the laptop test step kept, and both files are in .forge/always-tests.txt only if that does not break tests/test_required_repo_rules.py",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-21T02:17:39.216071+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Main fails 13 work-round tests after the laptop-tests-before-push change (b2928beaa): tests/test_effort_ladder.py (for example test_3_reviews_reads_and_design_keep_their_effort[design], test_8_native_round_names_the_requested_effort[codex]) and tests/test_board_tests_after_worker.py (test_13_close_tests_after_worker_exit_show_tests_running[new]); the owner wants the laptop step in v1.2.45, so repair forward"
+}
