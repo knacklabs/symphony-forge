@@ -49,6 +49,7 @@ def publish_on_exit(top: Path, run: Callable[[], int]) -> int:
              for block in repo.git("worktree", "list", "--porcelain", cwd=top).split("\n\n")]
     current = next(tree for tree in trees if Path(tree["worktree"]).resolve() == top.resolve())
     before, branch = current["HEAD"], current["branch"].removeprefix("refs/heads/")
+    main = repo.forge_dir(top).parent.parent
     flush = True
     try:
         result = run()
@@ -59,8 +60,10 @@ def publish_on_exit(top: Path, run: Callable[[], int]) -> int:
         flush = error.cmd[:2] != ["git", "push"]
         raise
     finally:
-        # A merged item's checkout can be removed or returned to the default branch.
-        if flush and top.exists() and repo.current_branch(top) == branch:
+        # Windows can keep the folder after Git removes the checkout registration.
+        # Ask the surviving main checkout whether this branch still owns that folder.
+        if (flush and (attached := repo.git("branch", "--list", branch, "--format=%(worktreepath)", cwd=main))
+                and Path(attached).resolve() == top.resolve()):
             saved = repo.git("log", "--format=", "--name-only", f"{before}..HEAD", cwd=top).splitlines()
             remote = repo.run("git", "rev-parse", f"origin/{branch}", cwd=top)
             if (any(path.startswith(review.BOOKKEEPING) or repo.SIGNOFF.fullmatch(path) for path in saved)

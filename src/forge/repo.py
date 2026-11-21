@@ -1002,6 +1002,9 @@ def resume_pin(top: Path, previous: str, rounds: int | None = None, *, accepted:
         os.environ["FORGE_LAND_ROUNDS"] = str(rounds)
     if accepted:
         os.environ["FORGE_CLOSE_ACCEPTED"] = "1"
+    # The selected release can remove this checkout. A waiting parent must not
+    # hold its current directory open on Windows; children still start in top.
+    os.chdir(forge_dir(top).parent.parent)
     if before and (status := run_release(release, before, top)):
         sys.exit(status)
     sys.exit(run_release(release, sys.argv[1:], top))

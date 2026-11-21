@@ -207,6 +207,16 @@ def test_2_behind_recovery_finishes_close_under_the_upgraded_pin_before_retrying
     test_log = _client(env, tmp_path, previous, fast_test=False)
     current = env.repo.forge("--version").stdout.split()[-1]
     _earlier_release(env)
+    # Windows can retain the removed checkout's empty folder while a parent waits
+    # there. Reproduce that filesystem state on other hosts at the release edge.
+    # The real merge still decides the result and removes the Git registration.
+    launcher = env.repo.bin / "uv"
+    launcher.write_text(launcher.read_text("utf-8").replace(
+        "sys.exit(main())", """checkout = pathlib.Path.cwd()
+status = main()
+if status == 0 and args[5] in {"merge", "land"}:
+    checkout.mkdir(exist_ok=True)
+sys.exit(status)"""), encoding="utf-8")
     monkeypatch.setenv("FORGE_PINNED_RUN", "v1.2.2")
     _, prepared = env.start("repin-client", "fix/repin-client",
                             ".factory/fixes/repin-client.json",
@@ -273,8 +283,10 @@ def test_2_behind_recovery_finishes_close_under_the_upgraded_pin_before_retrying
     assert env.repo.git("show", "origin/main:forge.toml") == upgraded.strip()
     assert env.repo.git("show", "origin/main:README.md") == (
         "Branch greeting\n\nKeep this paragraph.\n\nOther closing")
-    if sys.platform == "win32" and where.exists():
+    if sys.platform == "win32" and "Forge could not fully remove its worktree at " in done.stdout:
         # Windows keeps a folder a waiting process is in; the merge still finishes and says so.
         assert f"Merged {item}. Forge could not fully remove its worktree at " in done.stdout
     else:
-        assert not where.exists()
+        # The release launcher recreates only the empty folder, never a checkout.
+        assert where.is_dir()
+        assert not list(where.iterdir())
