@@ -72,13 +72,14 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
+      - uses: astral-sh/setup-uv@v6
       - id: docs
         env:
           GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           DOCS_ONLY_EXCLUDES: '<docs-excludes>'
-        run: python .forge/review-tests.py
+        run: <select-command>
 
   tests:
     needs: docs-check
@@ -402,7 +403,7 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
         full_suite = full_suite.replace("    steps:\n", "    steps:\n      - run: " + json.dumps(
             'echo "::warning::' + full_warning + '"') + "\n", 1)
     template = WORKFLOW
-    if ("{groups}" not in change_command
+    if (("{groups}" not in change_command and not repo.pytest_split(top, change_command))
             or re.search(r"(?:\{group\}|--shard=\d+)/\d+",
                          (cfg.get("fast_test") or "") + "\n" + cfg["test"])):
         # A fixed shard count must keep every shard, even for a small change.
@@ -473,6 +474,9 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                 .replace("<full-install>", "uv tool install ." if source
                          else sync.install_line(cfg["version"]))
                 .replace("<test-install>", test_install)
+                .replace("<select-command>", "uv run --no-project --with " + (
+                    "." if source else sync.install_line(cfg["version"]).removeprefix("uv tool install "))
+                    + " python .forge/review-tests.py || python -I -S .forge/review-tests.py")
                 .replace("<test>", json.dumps(test))
                 .replace("<group-warning>", "      - run: " + json.dumps(
                     'echo "::warning::' + warning + '"') + "\n" if warning else "")
