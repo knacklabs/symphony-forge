@@ -134,7 +134,7 @@
     "status": "blocked"
   },
   "round": 3,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-21T13:26:08.236221+00:00",
@@ -167,13 +167,24 @@
       "at": "2026-11-21T15:15:39.995910+00:00",
       "round": 3,
       "step": "hold"
+    },
+    {
+      "at": "2026-11-21T15:16:21.036238+00:00",
+      "by": "owner",
+      "choice": "same",
+      "round": 3,
+      "step": "owner decision"
     }
   ],
   "stop": {
     "at": "2026-11-21T15:15:39.995910+00:00",
+    "by": "owner",
+    "choice": "same",
     "question": "Forge reruns failed CI test jobs once (close's 'Started the failed is stuck. It should deliver: Close, land and the CI test step rerun a failed job or failed test files only when the failure is a runner loss, cancellation or timeout, never when a test fails its check; a test that passes only on a rerun is still reported as flaky as today; new repos get it at init and existing repos on upgrade and forge sync\nTwo rounds in a row left the open P0 not done: mixed infrastructure and product failures still retry in src/forge/land.py.\nThe worker tried: Keep retries limited to infrastructure failures.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
+    "reason": "Owner chose on 21 Nov 2026: one more Codex round for a timeout after an early failed test",
     "tool": "codex",
-    "wait_id": "c407f930-0c6c-4537-8beb-4f45218dd1b3"
+    "wait_id": "c407f930-0c6c-4537-8beb-4f45218dd1b3",
+    "worker_round": 3
   },
   "stuck": {
     "close": "afb4ece3-a8ea-4f9c-ae5c-57e166b39b7c",
