@@ -1,0 +1,15 @@
+{
+  "base": "bb5484562039300e4d1effcbb8b1e64f116370a2",
+  "branch": "fix/rerun-only-infra-errors",
+  "done_when": "Close, land and the CI test step rerun a failed job or failed test files only when the failure is a runner loss, cancellation or timeout, never when a test fails its check; a test that passes only on a rerun still opens a fix; new repos get it at init and existing repos on upgrade and forge sync",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-21T13:26:08.236221+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Forge reruns failed CI test jobs once (close's 'Started the failed test jobs again once') and reruns failed test files inside a group, even when a test failed its assertion. In Forge's last 150 runs, 0 of 38 job reruns passed and reruns cost 28% of CI time. Owner chose on 21 Nov 2026: rerun only on infrastructure errors."
+}
