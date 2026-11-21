@@ -810,6 +810,13 @@ def allow_large(args: argparse.Namespace) -> None:
     if (state.get("stop") or {}).get("predicted_files"):
         repo.record_event(top, name, "owner wait end", wait_id=state["stop"].get("wait_id"))
         del state["stop"]
+    from forge import codex, nextstep, owner_choices
+    question = owner_choices.worker_question(top, name, {})
+    if question and re.search(r"\bforge (?:fix|task) allow-large\b", question):
+        for wait in nextstep.wait_records(top, name):
+            if wait["open"] and wait.get("event") == "worker question" and wait.get("question") == question:
+                repo.record_event(top, name, "owner wait end", wait_id=wait["id"])
+        codex._record(codex._item_file(top, name, ".json", "Build"), question=None, question_id=None)
     kind, limit = ("story part", "line limit") if "/" in name else ("fix", "fix limit")
     repo.commit_state(f"Allow the {kind} past the {limit}: {state['allow_large']}",
                       repo.write_state(name, state, top), top=top)
