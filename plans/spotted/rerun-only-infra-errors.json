@@ -1,0 +1,92 @@
+{
+  "items": [
+    {
+      "key": "bug\t.github/workflows/forge-next.yml\tThe experimental Windows suite still asks pytest to rerun failed assertions.",
+      "kind": "bug",
+      "path": ".github/workflows/forge-next.yml",
+      "line": 146,
+      "text": "The experimental Windows suite still asks pytest to rerun failed assertions.",
+      "from": "worker",
+      "item": "rerun-only-infra-errors",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tFunctional: Leave timed-out setup and teardown failures red\trerun-only-infra-errors",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 621,
+      "text": "Functional: Leave timed-out setup and teardown failures red",
+      "from": "blocking",
+      "item": "rerun-only-infra-errors",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tFunctional: Preserve worker execution when retrying a lost pytest worker\trerun-only-infra-errors",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 584,
+      "text": "Functional: Preserve worker execution when retrying a lost pytest worker",
+      "from": "blocking",
+      "item": "rerun-only-infra-errors",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tFunctional: Retain timeout retries for existing pytest-timeout installations\trerun-only-infra-errors",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 621,
+      "text": "Functional: Retain timeout retries for existing pytest-timeout installations",
+      "from": "blocking",
+      "item": "rerun-only-infra-errors",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/land.py\tFunctional: Do not reject the generated aggregate when a train retries a failed group\trerun-only-infra-errors",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 336,
+      "text": "Functional: Do not reject the generated aggregate when a train retries a failed group",
+      "from": "blocking",
+      "item": "rerun-only-infra-errors",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/land.py\tFunctional: Recognize GitHub's actual runner-loss evidence\trerun-only-infra-errors",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 352,
+      "text": "Functional: Recognize GitHub's actual runner-loss evidence",
+      "from": "blocking",
+      "item": "rerun-only-infra-errors",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/land.py\tNot done: Mixed infrastructure and product failures still retry\trerun-only-infra-errors",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 350,
+      "text": "Not done: Mixed infrastructure and product failures still retry",
+      "from": "blocking",
+      "item": "rerun-only-infra-errors",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_grouped_full_run_retries_failed_files.py\tGate: Grouped retry proofs do not check the unfinished sibling\trerun-only-infra-errors",
+      "kind": "bug",
+      "path": "tests/test_grouped_full_run_retries_failed_files.py",
+      "line": 64,
+      "text": "Gate: Grouped retry proofs do not check the unfinished sibling",
+      "from": "blocking",
+      "item": "rerun-only-infra-errors",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
