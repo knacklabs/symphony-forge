@@ -4,12 +4,25 @@
   "done_when": "Close, land and the CI test step rerun a failed job or failed test files only when the failure is a runner loss, cancellation or timeout, never when a test fails its check; a test that passes only on a rerun still opens a fix; new repos get it at init and existing repos on upgrade and forge sync",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-21T13:26:08.236221+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-21T13:26:25.587806+00:00",
+      "round": 1,
+      "step": "resume"
     }
   ],
-  "why": "Forge reruns failed CI test jobs once (close's 'Started the failed test jobs again once') and reruns failed test files inside a group, even when a test failed its assertion. In Forge's last 150 runs, 0 of 38 job reruns passed and reruns cost 28% of CI time. Owner chose on 21 Nov 2026: rerun only on infrastructure errors."
+  "stuck": {
+    "close": null,
+    "head": "8dc470aa1c081e45e76278450132515ad83268f6",
+    "keys": {},
+    "round": null
+  },
+  "why": "Forge reruns failed CI test jobs once (close's 'Started the failed test jobs again once') and reruns failed test files inside a group, even when a test failed its assertion. In Forge's last 150 runs, 0 of 38 job reruns passed and reruns cost 28% of CI time. Owner chose on 21 Nov 2026: rerun only on infrastructure errors.",
+  "worker": "codex"
 }
