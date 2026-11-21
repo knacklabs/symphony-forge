@@ -4,12 +4,25 @@
   "done_when": "forge merge started inside the item's worktree ends with exit 0 on Windows after it merges, and test_9 of the record-only test no longer fails on Windows; forge-next.yml's Windows jobs pass on the fix branch",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-21T08:23:53.540577+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-21T08:24:13.934352+00:00",
+      "round": 1,
+      "step": "resume"
     }
   ],
-  "why": "The v1.2.45 release check fails on Windows in two places. First, forge merge run from inside the fix's worktree merges, cannot remove the worktree, then fails with 'git branch failed: not a git repository' (tests/test_merge_refreshes_behind_base.py test_2, all four cases; it passed on v1.2.44). Second, tests/test_record_only_failed_results.py test_9 runs a workflow step with bash, which on the Windows runner is the uninstalled WSL bash."
+  "stuck": {
+    "close": null,
+    "head": "d16cffaee649f72b00aff27e63c1d5337e7ad971",
+    "keys": {},
+    "round": null
+  },
+  "why": "The v1.2.45 release check fails on Windows in two places. First, forge merge run from inside the fix's worktree merges, cannot remove the worktree, then fails with 'git branch failed: not a git repository' (tests/test_merge_refreshes_behind_base.py test_2, all four cases; it passed on v1.2.44). Second, tests/test_record_only_failed_results.py test_9 runs a workflow step with bash, which on the Windows runner is the uninstalled WSL bash.",
+  "worker": "codex"
 }
