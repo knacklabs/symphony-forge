@@ -1,6 +1,13 @@
 {
   "base": "36b55e1d116fba825974443fb40f30a4e64232d3",
   "branch": "fix/one-group-by-selection",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1fbe0-eb71-78a1-8a9a-ff5c2763b1d3",
+    "head": null,
+    "start": "87680af7591d1519a81f6fc7261233a29a9bcca4"
+  },
   "done_when": "The one-group choice in review-tests.py uses the size of the selected test set (one group only when the selected tests are a small share of all tests, for example under a quarter, or the selection is small in absolute terms), not the changed-file count, so a small change to a central file runs all configured groups; new and existing repos get it on upgrade and forge sync",
   "fix_kind": "mechanical",
   "kind": "fix",
