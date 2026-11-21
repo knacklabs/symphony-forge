@@ -203,7 +203,7 @@
     "status": "blocked"
   },
   "round": 5,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-20T03:29:36.361890+00:00",
@@ -286,12 +286,23 @@
       "at": "2026-11-21T05:58:37.705832+00:00",
       "round": 5,
       "step": "hold"
+    },
+    {
+      "at": "2026-11-21T05:59:38.585080+00:00",
+      "by": "owner",
+      "choice": "more",
+      "round": 5,
+      "step": "owner decision"
     }
   ],
   "stop": {
     "at": "2026-11-21T05:58:37.705832+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/templates/review-tests.py",
-    "wait_id": "b7c7ed3b-210a-43c3-9b1d-265385f71ff2"
+    "reason": "Owner chose on 21 Nov 2026: fix the wait for checks that never start (finding 2); finding 1 (merging two record branches) is accepted as a known issue",
+    "wait_id": "b7c7ed3b-210a-43c3-9b1d-265385f71ff2",
+    "worker_round": 5
   },
   "stuck": {
     "close": "d672d45c-01f9-45f6-a4f6-6b51401e50dc",
