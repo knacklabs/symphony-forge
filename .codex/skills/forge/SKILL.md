@@ -2261,9 +2261,11 @@ in the default branch. Land retries close once itself, including a conflict duri
 wait; if the merge needs a person, it stops with close's existing conflict next step.
 If GitHub refuses a pull request body update, close stops after one attempt, including during a
 history retry. Wait for a rate limit to reset, or fix the reported problem, then retry the command.
-Close reruns failed pytest files once after a local test failure. If they pass, close names
-them as flaky and continues. A second failure still stops close. A failure without named
-test files still stops close.
+Close and CI rerun pytest files once only after a test-body timeout or loss of a test process.
+An assertion, setup, teardown or collection failure stops the run without a retry. After process loss,
+the retry includes unfinished tests. A second failure still stops the run. A failure without
+named test files still stops the run. If the retry passes, the report names the flaky files.
+New repos get this at init. Existing repos get it on upgrade and sync.
 
 In local mode, close's tests and review run at the same time. In CI mode, close runs its review
 first, saves it, and pushes once. It then waits for the pull request checks. A red test or a P0/P1 finding still
@@ -2521,8 +2523,8 @@ and its run must cover that base. Each job that uses the step skips only its gua
 
 When `forge land` stops after its one fix round or on a check it cannot fix, judge
 them the same way: dismiss with evidence, or `forge work <item>`, then `forge land <item>` again.
-A failed CI job whose log names none of the change's files is re-run once per pushed head
-instead of costing a fix round. Forge's review check follows review recovery, never this retry.
+A failed CI job gets one retry per pushed head only for runner loss, cancellation or timeout.
+An assertion failure needs a repair. Forge's review check follows review recovery, never this retry.
 When GitHub has not started that
 re-run in time, land stops; run `forge land <item>` again, which closes again and runs a fix
 round if the check is still red.
@@ -2604,8 +2606,8 @@ commit. When the combined check is red, Forge waits until every job has finished
 logs name the files of exactly one change, that change leaves and merges last, one at a time, with
 its own check, and the rest run once more as a new train when two or more remain. If the check of
 the change that left fails, it stops under Needs you with the failure and gets no fix round. If the
-logs name no change, Forge runs the failed jobs again once (a job that ran out of time counts as
-failed), and waits for every job of that run too; if they stay red, or the logs name several
+logs name no change and show runner loss, cancellation or timeout, Forge runs the failed jobs again once,
+and waits for every job of that run too; if they stay red, or the logs name several
 changes, each change goes one at a time. New repos get this at init; existing repos get the train
 on upgrade, with no workflow change, and this guide on sync. Only one run
 works in a repo at a time. When two closes in the run collide on git's ref lock while fetching,
@@ -2615,7 +2617,7 @@ that change, and the others go on. The run ends with `Merged (n): ... · Ready t
 you (n): ...`, then each stopped change with its reason and next step: `forge land <item>` for
 its next run, or, for a stopped change, close's own question and next step, which only the owner
 answers. Close waits for the owner's recorded choice. A failed
-CI job whose log names none of the change's files runs again once before the fix round.
+CI job gets one retry before the fix round only for runner loss, cancellation or timeout.
 If CI still fails after the fix round, the change stops with its reason.
 Forge's review check follows review recovery instead. Where a human merges, the run closes
 every change, holds none and merges none, and lists the ready ones oldest first, with stacked fixes after their bases,

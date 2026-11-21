@@ -1,0 +1,198 @@
+{
+  "amendments": [
+    {
+      "at": "2026-11-21T13:57:47.640142+00:00",
+      "because": "Automatic fix creation for flaky tests is not built yet; it is planned in FORGE-FASTPATH-1 after v1.2.45 is measured",
+      "done_when": "Close, land and the CI test step rerun a failed job or failed test files only when the failure is a runner loss, cancellation or timeout, never when a test fails its check; a test that passes only on a rerun still opens a fix; new repos get it at init and existing repos on upgrade and forge sync"
+    }
+  ],
+  "base": "bb5484562039300e4d1effcbb8b1e64f116370a2",
+  "branch": "fix/rerun-only-infra-errors",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1fe49-6a8f-7c41-93d2-d17b2140b114",
+    "head": null,
+    "start": "6b546c793aad94f4c2edd9cb4e6d6e0761c93123"
+  },
+  "done_when": "Close, land and the CI test step rerun a failed job or failed test files only when the failure is a runner loss, cancellation or timeout, never when a test fails its check; a test that passes only on a rerun is still reported as flaky as today; new repos get it at init and existing repos on upgrade and forge sync",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_restart() in src/forge/land.py",
+      "file": "src/forge/land.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 350,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Mixed infrastructure and product failures still retry",
+      "work": 2
+    },
+    {
+      "area": "src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 584,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Preserve worker execution when retrying a lost pytest worker",
+      "work": 2
+    },
+    {
+      "area": "src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 621,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Leave timed-out setup and teardown failures red",
+      "work": 1
+    },
+    {
+      "area": "_restart() in src/forge/land.py",
+      "file": "src/forge/land.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 336,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Do not reject the generated aggregate when a train retries a failed group",
+      "work": 2
+    },
+    {
+      "area": "_restart() in src/forge/land.py",
+      "file": "src/forge/land.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 352,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Recognize GitHub's actual runner-loss evidence",
+      "work": 2
+    },
+    {
+      "area": "src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 621,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Functional: Retain timeout retries for existing pytest-timeout installations",
+      "work": 2
+    },
+    {
+      "area": "test_1_grouped_full_run_retries_only_failed_files() in tests/test_grouped_full_run_retries_failed_files.py",
+      "file": "tests/test_grouped_full_run_retries_failed_files.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 64,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Grouped retry proofs do not check the unfinished sibling",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "4972fa4bea8ca45ccb5f267747170b14a062e9a85258919b61ab368f262a2c17",
+    "changed": "4f95a0abebb0e776753f05a0d4f2f3dba4597ba787b912029c6a7cbd1a9a05b7",
+    "commit": "25d66f40627789adb1ee488e0ace6694d0d15561",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a quiet pytest assertion fails and a later test hangs until the CI job is cancelled.\nThe previous finding remains open. Pytest writes the `F` progress mark without a newline ([pytest terminal reporter](https://github.com/pytest-dev/pytest/blob/9.0.2/src/_pytest/terminal.py#L615-L625)), while `fasttest.test_output` buffers incomplete lines until a newline or process exit (`src/forge/fasttest.py:683-695`). If cancellation terminates Forge while the test is still running, the mark never reaches the GitHub log. `_product_failure` then sees no failure, and `_restart` retries the cancelled job; a transient assertion can pass on that retry and leave CI green. The proof supplies a newline-terminated `F` directly in the fake GitHub log (`tests/test_ci_retries_failed_test_jobs.py:66`), so it misses the buffering path.",
+        "file": "src/forge/land.py",
+        "gain": 5,
+        "harm": 3,
+        "line": 333,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: Mixed infrastructure and product failures still retry",
+        "work": 2
+      }
+    ],
+    "id": "07e75000-a010-4cb7-998d-0f11f5e33a90",
+    "status": "blocked"
+  },
+  "round": 4,
+  "status": "fixing",
+  "steps": [
+    {
+      "at": "2026-11-21T13:26:08.236221+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-21T13:26:25.587806+00:00",
+      "round": 1,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-21T13:57:51.845012+00:00",
+      "round": 2,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-21T14:10:37.113200+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-21T14:11:18.933074+00:00",
+      "round": 3,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-21T15:14:37.998102+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-21T15:15:39.995910+00:00",
+      "round": 3,
+      "step": "hold"
+    },
+    {
+      "at": "2026-11-21T15:16:21.036238+00:00",
+      "by": "owner",
+      "choice": "same",
+      "round": 3,
+      "step": "owner decision"
+    },
+    {
+      "at": "2026-11-21T16:06:30.293985+00:00",
+      "round": 4,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-21T16:20:42.580082+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "8e7e2d39-6533-4c94-af4a-1d83c7e5ab29",
+    "head": "33fa7eb8f812b6b0d943cb90bde1d8fdb55e4d18",
+    "keys": {
+      "the open P0 not done: mixed infrastructure and product failures still retry in src/forge/land.py": 2
+    },
+    "round": 3
+  },
+  "why": "Forge reruns failed CI test jobs once (close's 'Started the failed test jobs again once') and reruns failed test files inside a group, even when a test failed its assertion. In Forge's last 150 runs, 0 of 38 job reruns passed and reruns cost 28% of CI time. Owner chose on 21 Nov 2026: rerun only on infrastructure errors.",
+  "worker": "codex"
+}

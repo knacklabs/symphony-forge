@@ -80,6 +80,8 @@ if args[:2] == ["pr", "checks"] and args[2].startswith("forge-merge-train/") and
             {"name": "test group 2 of 2", "bucket": "pending" if first else "pass", "link": link(2, 22)},
             {"name": "Review pull request", "bucket": "fail", "link": link(1, 11)},
             {"name": "forge-pr-check", "bucket": "fail", "link": ""}]
+    if red.get("aggregate"):
+        rows.insert(1, {"name": "tests", "bucket": "fail", "link": link(2, 20)})
     answer(json.dumps(rows), 1)
 if args[:2] == ["pr", "checks"] and cfg.get("fresh") and args[2] == "fix/%s" % cfg["fresh"].get("red"):
     # the red member's pull request lists its failing check, as GitHub does (job 70 of run 7)
@@ -673,15 +675,19 @@ def test_4_a_failure_naming_no_change_runs_again_once(train, monkeypatch, reques
         pytest.skip("new repos only")
     heads = _ready(env, monkeypatch, ("aa", "bb", "cc"))
     logs = {"flake": "ConnectionResetError: the runner lost its network\n",
-            "timeout": "The job exceeded the maximum execution time\n", "still-red": "Process exited with code 1\n",
+            "timeout": "The job has exceeded the maximum execution time\n", "still-red": "The runner was shut down\n",
             "several": _failed_log("aa.py", "bb.py")}[variant]
     # A healed re-run still runs at first. A re-run that fails again has a second group still running. In
     # the fallbacks, main has moved, so each change closes anew on a new head whose tests run at first;
     # in several, bb's heads turn red.
-    red = {"flake": {"heal": "2", "slow": True}, "timeout": {"heal": "2", "slow": True, "conclusion": "timed_out"},
+    red = {"flake": {"heal": "2", "slow": True, "aggregate": True},
+           "timeout": {"heal": "2", "slow": True, "conclusion": "timed_out"},
            "still-red": {"settle": True}, "several": {}}[variant]
     fallback = variant in ("still-red", "several")
-    _stub(env, red_train=red, logs={"21": logs}, moved=fallback,
+    failed_logs = {"21": logs}
+    if red.get("aggregate"):
+        failed_logs["20"] = "Error: Process completed with exit code 1"
+    _stub(env, red_train=red, logs=failed_logs, moved=fallback,
           fresh={"closed": list(heads.values()), "red": "bb" if variant == "several" else None} if fallback else None)
     done = _all(env)
     lines = done.stdout.splitlines()

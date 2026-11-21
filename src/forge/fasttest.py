@@ -554,11 +554,12 @@ RESULTS_HEADER = "# forge test results\n"
 INVOCATION_HEADER = "# forge pytest invocation "
 RETRY_HEADER = "# forge pytest retry\n"
 RETRY_STEP = "# forge pytest retry invocation\n"
-RESULTS = """import json, os, pathlib, pytest
+RESULTS = """import json, os, pathlib, pytest, re
 """ + WORKER_REPORT + """
 FILE, ROOT = [], []
 COLLECTED = []
 FAILED, PASSED = set(), set()
+PRODUCT_FAILURES = set()
 CRASHED, CRASH_ITEMS, FINISHED = set(), set(), set()
 INVOCATION_HEADER = """ + repr(INVOCATION_HEADER) + """
 RETRY_HEADER = """ + repr(RETRY_HEADER) + """
@@ -580,10 +581,11 @@ def pytest_configure(config):
                 pytest.exit("Close keeps this pytest command's earlier result.", returncode=previous["exit"])
             config.args = previous["files"]
             config.option.file_or_dir = config.args
-            config.option.splits = config.option.group = None
-            # Xdist workers reconstruct the original CLI args, losing this file selection.
-            # Run the failed files here instead of collecting the whole group again.
-            config.option.dist = "no"
+            if not previous.get("interrupted"):
+                config.option.splits = config.option.group = None
+                # Xdist workers reconstruct the original CLI args, losing this file selection.
+                # A lost worker instead replays the original invocation in workers.
+                config.option.dist = "no"
             config._forge_prior_passed = previous["passed"]
     path = os.environ.pop("FORGE_TEST_RESULTS", None)
     if path and not hasattr(config, "workerinput"):
@@ -614,6 +616,11 @@ def pytest_runtest_logreport(report):
     if not FILE or report.outcome == "rerun" or report.when != "call" and report.passed:
         return
     FINISHED.add(report.nodeid)
+    if report.failed and report.when != "???":
+        message = getattr(getattr(report.longrepr, "reprcrash", None), "message", "")
+        if report.when != "call" or not re.fullmatch(
+                r"Failed: Timeout (?:>[^\\s]+s|\\(>[^\\s]+s\\) from pytest-timeout\\.)", message):
+            PRODUCT_FAILURES.add(report.nodeid)
     if report.when == "call":
         outcome = (("xfail" if report.skipped else "xpass") if hasattr(report, "wasxfail")
                    else report.outcome)
@@ -622,6 +629,7 @@ def pytest_runtest_logreport(report):
     _write_result(outcome, report.nodeid)
 def pytest_collectreport(report):
     if FILE and report.failed:
+        PRODUCT_FAILURES.add(report.nodeid)
         _write_result("error", report.nodeid)
 def _write_result(outcome, nodeid):
     file, _, rest = nodeid.partition("::")
@@ -643,8 +651,10 @@ def pytest_sessionfinish(session):
     if FILE:
         for nodeid in CRASH_ITEMS - FINISHED:
             _write_result("error", nodeid)
-        invocation = dict(files=sorted(FAILED), passed=sorted(PASSED), exit=int(session.exitstatus),
-                          collected=sum(COLLECTED), interrupted=bool(CRASHED))
+        invocation = dict(files=list(session.config.args) if CRASHED else sorted(FAILED),
+                          passed=sorted(PASSED), exit=int(session.exitstatus),
+                          collected=sum(COLLECTED), interrupted=bool(CRASHED),
+                          product_failure=bool(PRODUCT_FAILURES))
         with FILE[0].open("a", encoding="utf-8") as results:
             results.write(INVOCATION_HEADER + json.dumps(invocation) + "\\n")
 """

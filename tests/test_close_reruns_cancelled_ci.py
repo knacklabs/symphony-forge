@@ -25,9 +25,21 @@ CANCELLED = [_check("tests", "cancelled"), _check("lint", "cancelled"), OTHER]
 RUNNING = [_check("tests", None, status="in_progress"), _check("lint", "success"), OTHER]
 
 
+def _cancelled_jobs(env):
+    # Cancellation is retryable when neither job reported a test failure.
+    env.gh.respond("run", "view", "77", "--json", "jobs", stdout=json.dumps({"jobs": [
+        {"name": name, "conclusion": "cancelled", "databaseId": job}
+        for name, job in (("tests", 701), ("lint", 702))
+    ]}))
+    for job in (701, 702):
+        env.gh.respond("run", "view", "77", "--job", str(job), "--log", stdout="")
+    env.gh.respond("run", "view", "77", "--json", "attempt", stdout='{"attempt": 2}')
+
+
 def _close(env, monkeypatch, *looks, workflows):
     monkeypatch.setenv("FORGE_CHECKS_WAIT", "600")
     env.gh.respond("run", "rerun")
+    _cancelled_jobs(env)
     _agent(env)
     _fix(env, "working", worked=True)
     _queue(env, RUNS, *_runs(*looks))
@@ -81,6 +93,7 @@ def test_5_a_newer_run_of_another_event_does_not_pass_the_cancelled_check(clock,
 
 def test_6_land_reads_fresh_checks_after_the_rerun_so_a_passed_retry_counts(clock, monkeypatch):
     clock.gh.respond("run", "rerun")
+    _cancelled_jobs(clock)
     monkeypatch.setenv("FORGE_CHECKS_WAIT", "600")
     _agent(clock)
     _fix(clock, "working", worked=True)

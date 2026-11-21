@@ -313,12 +313,12 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
     windows_test = test
     windows = test_runner.startswith("windows-")
     if windows or regular_runner.startswith("windows-"):
-        # Each attempt gets its own PowerShell process, so exit or throw cannot end the retry.
+        # Preserve the configured command's PowerShell exit status without replaying assertions.
         script = ("$ErrorActionPreference = 'Stop'\n& {\n" + test +
                   "\n}\nif (Test-Path variable:LASTEXITCODE) { exit $LASTEXITCODE }")
         attempt = ("& (Get-Process -Id $PID).Path -NoProfile -NonInteractive -Command '" +
                    script.replace("'", "''") + "'")
-        windows_test = f"{attempt}\nif ($LASTEXITCODE -ne 0) {{ {attempt} }}\nexit $LASTEXITCODE"
+        windows_test = f"{attempt}\nexit $LASTEXITCODE"
         test = windows_test if windows else plain_test
     full_node = node.replace("        if: steps.parent-tests.outputs.reuse != 'true'\n", "")
     npm_cache = ("      - uses: actions/cache@v4\n"

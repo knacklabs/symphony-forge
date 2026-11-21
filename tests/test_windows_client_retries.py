@@ -1,4 +1,4 @@
-"""Generated Windows client checks allow one retry and retain a second failure."""
+"""Generated Windows client checks leave assertion failures red on their first attempt."""
 from __future__ import annotations
 
 import json
@@ -27,10 +27,10 @@ STORY = "windows-rerun-flakes"
     ("ubuntu-latest", "windows-latest"), ("windows-latest", "ubuntu-latest"),
 ], ids=["windows", "linux", "mac", "linux-windows-tests", "windows-linux-tests"])
 def test_3_windows_client_checks_retry_once(repo, gh, tmp_path, setup, command_style, runner, test_runner):
-    # Audit: retain retry behavior and compare the trusted PR job across runner settings.
+    # Audit: assertions execute once; compare the trusted PR job across runner settings.
     # Comparing the rest of the workflow also captures the deliberately grouped nightly jobs.
     # The existing command-level cases own this contract and need no production seam.
-    # On pytest commands, Forge retries the failed file before the Windows job retries Forge.
+    # Neither the pytest command nor its Windows shell retries an assertion failure.
     command = 'python retry_probe.py && python -c "print(\'suite passed\')"'
     windows_command = ('pwsh -File "retry probe.ps1"'
                        if command_style == "powershell" else "python -m pytest test_retry_probe.py -q")
@@ -161,12 +161,8 @@ def test_3_windows_client_checks_retry_once(repo, gh, tmp_path, setup, command_s
                                       "FORGE_GROUPS": str(groups),
                                       "ATTEMPT_FILE": attempts.as_posix(),
                                       "FAILURES": str(failures), "FAILURE_MODE": mode}, timeout=30)
-            if machine == "windows-latest" and command_style == "split-pytest":
-                expected_attempts = min(failures + 1, 4) if failures else 1
-                passes = failures in (0, 1)
-            else:
-                expected_attempts = 2 if machine == "windows-latest" and failures else 1
-                passes = failures == 0 or (machine == "windows-latest" and failures == 1)
+            expected_attempts = 1
+            passes = failures == 0
             assert attempts.exists(), executed.stdout + executed.stderr
             assert attempts.read_text(encoding="utf-8") == str(expected_attempts), executed.stderr
             assert (executed.returncode == 0) == passes, executed.stdout + executed.stderr
