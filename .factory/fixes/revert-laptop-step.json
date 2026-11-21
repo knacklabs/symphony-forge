@@ -11,7 +11,7 @@
       "gain": 4,
       "harm": 4,
       "line": 3,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -24,7 +24,7 @@
       "gain": 4,
       "harm": 1,
       "line": 390,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -34,36 +34,15 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "7798bb64e6b20e4a85f9f75892809ec8829caa2fc63ce10ebdda25dd22f0c661",
-    "changed": "c6be31c5e90e35c0cc55c80a7e91ffbb7b993e9c2ec7963f5d3dc4fc9c43a0e8",
-    "commit": "a35cbc687d3a8d04e1ea1c7aecb979c9d511d40c",
+    "branch_diff": "748a995c0b8266105b653d8154156421d08d24eb6cc9d3ab1eafbf484c2f9d3a",
+    "changed": "fc7ae934605693ad060098d8e640e853e68b9756a4771480bc285857b2393648",
+    "commit": "9c4577984ce8c58caec319ef3183eca2c5c64434",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 1, Harm 4\nRaise: Data loss\nCase: normal use - after this revert merges, someone checks the board or release history. The revert deletes the original fix's state file. `src/forge/board.py:907` builds landed state from files present at the tip, and `src/forge/board.py:646` creates fix rows from those states, so once the merged branch is removed the original fix and its time and cost disappear from the board. `src/forge/releases.py:62` also excludes it from release contents. The revert deletes `plans/spotted/laptop-tests-before-push.json:59` too, removing the open, unrelated report about full-container test selection from the records read by `src/forge/spotted.py:85`. Preserve these records while reverting the code.",
-        "file": ".factory/fixes/laptop-tests-before-push.json",
-        "gain": 4,
-        "harm": 4,
-        "line": 3,
-        "priority": "P1",
-        "title": "Data loss: Preserve the reverted fix's records",
-        "work": 1
-      },
-      {
-        "body": "Gain 4, Work 1, Harm 1\nRaise: Gate\nCase: normal use - approving this revert for release. The proof list does not map the Done-when item, `b2928beaa is reverted and nothing else changes`, to a check of either the complete inverse patch or the absence of unrelated edits. It names work-round and lane tests, repository rule tests, and a future release run; those can pass while an unrelated edit is included or a non-lane portion of the original commit remains. Record a comparison of the original commit's raw-parent patch with this branch's delta, excluding Forge's own records.",
-        "file": "src/forge/worker.py",
-        "gain": 4,
-        "harm": 1,
-        "line": 390,
-        "priority": "P1",
-        "title": "Gate: proof list",
-        "work": 1
-      }
-    ],
-    "id": "91c7c26c-259d-4d4e-85b7-b3f077b8b8f2",
-    "status": "blocked"
+    "findings": [],
+    "id": "bd26f005-c0fe-431e-bd88-5f1066228e3e",
+    "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-21T04:02:36.275564+00:00",
@@ -71,6 +50,10 @@
     },
     {
       "at": "2026-11-21T04:13:15.823519+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-21T04:17:29.001375+00:00",
       "step": "review"
     }
   ],
