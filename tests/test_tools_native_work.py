@@ -137,16 +137,16 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
         assert busy.returncode == 1 and repo.git("rev-parse", "HEAD", cwd=folder) == head
 
         # Uncommitted work gets the commit nudge and keeps the place; a second hand-back with the
-        # work still uncommitted reports a failed round, warns and frees it.
+        # work still uncommitted warns and frees it.
         (folder / "web").mkdir(exist_ok=True)
         (folder / "web/help.py").write_text("WORDS = {}\n", "utf-8")
         nudged = handback("BOARD/HELP", number, "Built it.")
         assert nudged.returncode == 0, nudged.stdout + nudged.stderr
         assert "Send this to subagent w1, then hand back again:" in nudged.stdout
-        assert ("ci runs the wider set of checks."
+        assert ("wider related tests, lint and type checks stay in pull request ci."
                 in nudged.stdout.lower())
         assert ("run the change's related tests through `forge test` in the foreground"
-                in nudged.stdout.lower())
+                not in nudged.stdout.lower())
         assert lane("BOARD/HELP")
         done = handback("BOARD/HELP", number, "Still not committed.")
         assert done.returncode == 0, done.stdout + done.stderr
@@ -160,13 +160,11 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
         assert '"item": "BOARD/HELP", "round": 1, "step": "worker round"' in timings
         events = [json.loads(line) for line in
                   (repo.path / ".git/forge/events.jsonl").read_text("utf-8").splitlines()]
-        [begun] = [e for e in events if e["event"] == "run start" and e["item"] == "BOARD/HELP"
-                   and e["kind"] == "work"]
-        [ended] = [e for e in events if e["event"] == "run end" and e["item"] == "BOARD/HELP"
-                   and e["kind"] == "work"]
+        [begun] = [e for e in events if e["event"] == "run start" and e["item"] == "BOARD/HELP"]
+        [ended] = [e for e in events if e["event"] == "run end" and e["item"] == "BOARD/HELP"]
         assert (begun["kind"], begun["round"], begun["family"]) == ("work", 1, tool)
         assert begun["requested"] is True
-        assert (ended["run_id"], ended["outcome"]) == (begun["id"], "failed")
+        assert (ended["run_id"], ended["outcome"]) == (begun["id"], "completed")
 
         # The next round continues the subagent on the role's model; an uncommitted forge.toml
         # edit, even a broken one, is put back, and a closing question is recorded.
