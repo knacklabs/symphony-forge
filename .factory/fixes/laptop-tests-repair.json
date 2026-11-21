@@ -11,8 +11,19 @@
   "done_when": "tests/test_effort_ladder.py and tests/test_board_tests_after_worker.py pass on main with the laptop test step kept, and both files are in .forge/always-tests.txt only if that does not break tests/test_required_repo_rules.py",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9aee7f9d1bd60233e5dccfd38af680c8dd4ab06c573e1a349c7b3d205e002af5",
+    "changed": "fd3a773d40f47ad4d2bd31d150c24fad230bd5d7f819febe02d92185314bb2b2",
+    "commit": "aad0369ab0cc77ec7bc4ca2b5e403822f7792b95",
+    "dismissals": [],
+    "findings": [],
+    "id": "8073c2ad-5b3f-4255-a941-792c2d0a6496",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-21T02:17:39.216071+00:00",
@@ -22,6 +33,10 @@
       "at": "2026-11-21T02:17:55.425862+00:00",
       "round": 1,
       "step": "resume"
+    },
+    {
+      "at": "2026-11-21T02:51:41.173543+00:00",
+      "step": "review"
     }
   ],
   "stuck": {

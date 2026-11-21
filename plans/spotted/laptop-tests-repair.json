@@ -1,0 +1,114 @@
+{
+  "items": [
+    {
+      "key": "bug\t.forge/always-tests.txt\tFunctional: The required-test list makes Forge full runs fail\trestore-full-run-paragraph",
+      "kind": "bug",
+      "path": ".forge/always-tests.txt",
+      "line": 7,
+      "text": "Functional: The required-test list makes Forge full runs fail",
+      "from": "blocking",
+      "item": "restore-full-run-paragraph",
+      "status": "done",
+      "closed_by": "laptop-tests-repair"
+    },
+    {
+      "key": "bug\t.forge/always-tests.txt\tGate: proof list\ta-change-to-review-code-can-pass-its-own",
+      "kind": "bug",
+      "path": ".forge/always-tests.txt",
+      "line": 5,
+      "text": "Gate: proof list",
+      "from": "blocking",
+      "item": "a-change-to-review-code-can-pass-its-own",
+      "status": "done",
+      "closed_by": "laptop-tests-repair"
+    },
+    {
+      "key": "bug\t.forge/always-tests.txt\tGate: related-test selection of the split and review-noise tests\ta-change-to-review-code-can-pass-its-own",
+      "kind": "bug",
+      "path": ".forge/always-tests.txt",
+      "line": 5,
+      "text": "Gate: related-test selection of the split and review-noise tests",
+      "from": "blocking",
+      "item": "a-change-to-review-code-can-pass-its-own",
+      "status": "done",
+      "closed_by": "laptop-tests-repair"
+    },
+    {
+      "key": "bug\t.forge/always-tests.txt\tKeep the required-tests fixture in sync with the new entries\ta-change-to-review-code-can-pass-its-own",
+      "kind": "bug",
+      "path": ".forge/always-tests.txt",
+      "line": 5,
+      "text": "Keep the required-tests fixture in sync with the new entries",
+      "from": "blocking",
+      "item": "a-change-to-review-code-can-pass-its-own",
+      "status": "done",
+      "closed_by": "laptop-tests-repair"
+    },
+    {
+      "key": "bug\t.forge/always-tests.txt\tNot done: A split's decisions survive a later review\ta-change-to-review-code-can-pass-its-own",
+      "kind": "bug",
+      "path": ".forge/always-tests.txt",
+      "line": 5,
+      "text": "Not done: A split's decisions survive a later review",
+      "from": "blocking",
+      "item": "a-change-to-review-code-can-pass-its-own",
+      "status": "done",
+      "closed_by": "laptop-tests-repair"
+    },
+    {
+      "key": "bug\ttests/test_board_tests_after_worker.py\tNot done: The board test accepts the review running alongside close's tests while still checking that no build worker is shown and that the\tboard-test-review-row",
+      "kind": "bug",
+      "path": "tests/test_board_tests_after_worker.py",
+      "line": 63,
+      "text": "Not done: The board test accepts the review running alongside close's tests while still checking that no build worker is shown and that the",
+      "from": "blocking",
+      "item": "board-test-review-row",
+      "status": "done",
+      "closed_by": "laptop-tests-repair"
+    },
+    {
+      "key": "bug\ttests/test_board_tests_after_worker.py\tNot done: board test still rejects a review running alongside tests\tboard-test-review-row",
+      "kind": "bug",
+      "path": "tests/test_board_tests_after_worker.py",
+      "line": 54,
+      "text": "Not done: board test still rejects a review running alongside tests",
+      "from": "blocking",
+      "item": "board-test-review-row",
+      "status": "done",
+      "closed_by": "laptop-tests-repair"
+    },
+    {
+      "key": "bug\ttests/test_required_repo_rules.py\tGate: proof list\ta-change-to-review-code-can-pass-its-own",
+      "kind": "bug",
+      "path": "tests/test_required_repo_rules.py",
+      "line": 42,
+      "text": "Gate: proof list",
+      "from": "blocking",
+      "item": "a-change-to-review-code-can-pass-its-own",
+      "status": "done",
+      "closed_by": "laptop-tests-repair"
+    },
+    {
+      "key": "bug\ttests/test_required_repo_rules.py\tGate: test_1_repo_required_rules_join_unrelated_selection\talways-run-repo-rule-tests",
+      "kind": "bug",
+      "path": "tests/test_required_repo_rules.py",
+      "line": 49,
+      "text": "Gate: test_1_repo_required_rules_join_unrelated_selection",
+      "from": "blocking",
+      "item": "always-run-repo-rule-tests",
+      "status": "done",
+      "closed_by": "laptop-tests-repair"
+    },
+    {
+      "key": "simplify\t.forge/always-tests.txt\tSimpler: infer the approach from the patch \u2192 record the choices",
+      "kind": "simplify",
+      "path": ".forge/always-tests.txt",
+      "line": 5,
+      "text": "Simpler: infer the approach from the patch \u2192 record the choices",
+      "from": "review",
+      "item": "a-change-to-review-code-can-pass-its-own",
+      "status": "done",
+      "closed_by": "laptop-tests-repair"
+    }
+  ]
+}
