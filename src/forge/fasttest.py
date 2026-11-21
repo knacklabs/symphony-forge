@@ -583,9 +583,9 @@ def pytest_configure(config):
             config.option.file_or_dir = config.args
             if not previous.get("interrupted"):
                 config.option.splits = config.option.group = None
-            # Xdist workers reconstruct the original CLI args, losing this file selection.
-            # Run the failed files here instead of collecting the whole group again.
-            config.option.dist = "no"
+                # Xdist workers reconstruct the original CLI args, losing this file selection.
+                # A lost worker instead replays the original invocation in workers.
+                config.option.dist = "no"
             config._forge_prior_passed = previous["passed"]
     path = os.environ.pop("FORGE_TEST_RESULTS", None)
     if path and not hasattr(config, "workerinput"):
@@ -618,7 +618,8 @@ def pytest_runtest_logreport(report):
     FINISHED.add(report.nodeid)
     if report.failed and report.when != "???":
         message = getattr(getattr(report.longrepr, "reprcrash", None), "message", "")
-        if not re.fullmatch(r"Failed: Timeout \\(>[^\\s]+s\\) from pytest-timeout\\.", message):
+        if report.when != "call" or not re.fullmatch(
+                r"Failed: Timeout (?:>[^\\s]+s|\\(>[^\\s]+s\\) from pytest-timeout\\.)", message):
             PRODUCT_FAILURES.add(report.nodeid)
     if report.when == "call":
         outcome = (("xfail" if report.skipped else "xpass") if hasattr(report, "wasxfail")

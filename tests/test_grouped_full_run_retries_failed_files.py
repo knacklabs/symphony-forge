@@ -34,6 +34,9 @@ def test_1_grouped_full_run_retries_only_failed_files(repo, gh, tmp_path, monkey
                         "c": ["excluded"], "d": ["excluded_one", "excluded_two"]}.items():
         receipt = tmp_path / (name + ".log")
         source = "from pathlib import Path\n" + f"receipt = Path({json.dumps(receipt.as_posix())})\n"
+        if failure == "runner-loss":
+            source += ("import pytest\n@pytest.fixture(autouse=True)\n"
+                       "def worker_state(request):\n    assert request.config.workerinput['workerid']\n")
         for test in tests:
             source += (f"def test_{test}():\n"
                        "    earlier = receipt.exists()\n"
@@ -61,7 +64,10 @@ def test_1_grouped_full_run_retries_only_failed_files(repo, gh, tmp_path, monkey
 
     interrupted = failure == "runner-loss" or failure == "timeout" and sys.platform == "win32"
     assert (tmp_path / "a.log").read_text("utf-8").splitlines() == ["pass"] * (2 if interrupted else 1), full.stdout + full.stderr
-    assert (tmp_path / "b.log").read_text("utf-8").splitlines().count("failed") == (1 if failure == "assertion" else 2)
+    expected = (["failed", "sibling"] if failure == "assertion" else
+                ["failed", "failed", "sibling"] if interrupted else
+                ["failed", "sibling"] * 2)
+    assert (tmp_path / "b.log").read_text("utf-8").splitlines() == expected
     assert not (tmp_path / "c.log").exists()
     assert not (tmp_path / "d.log").exists()
     assert (full.returncode == 0) == (failure != "assertion"), full.stdout + full.stderr

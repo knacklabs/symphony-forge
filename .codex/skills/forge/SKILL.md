@@ -2257,8 +2257,8 @@ in the default branch. Land retries close once itself, including a conflict duri
 wait; if the merge needs a person, it stops with close's existing conflict next step.
 If GitHub refuses a pull request body update, close stops after one attempt, including during a
 history retry. Wait for a rate limit to reset, or fix the reported problem, then retry the command.
-Close and CI rerun pytest files once only after a timeout or loss of a test process.
-An assertion, setup or collection failure stops the run without a retry. After process loss,
+Close and CI rerun pytest files once only after a test-body timeout or loss of a test process.
+An assertion, setup, teardown or collection failure stops the run without a retry. After process loss,
 the retry includes unfinished tests. A second failure still stops the run. A failure without
 named test files still stops the run. If the retry passes, the report names the flaky files.
 New repos get this at init. Existing repos get it on upgrade and sync.

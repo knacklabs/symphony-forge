@@ -569,18 +569,16 @@ def _rerun_cancelled(top: Path, item: str, sha: str, seen: list[tuple[str, str]]
             elif current.get("status") != "completed":
                 decided[suite] = PENDING  # A rerun is already going; GitHub keeps the run and counts attempts.
             elif (current.get("run_attempt") or 1) == 1 and (suite not in suites or suite in retry_suites):
-                if suite in suites:
-                    from forge import land
-                    late = land._restart(top, [str(current["id"])])
-                    if late and late != "gh":
-                        repo.refuse(REFUSALS["not_green"], item=item,
-                                    reason="GitHub has not started the failed test jobs again")
-                    if not late:
+                from forge import land
+                late = land._restart(top, [str(current["id"])])
+                if late and late != "gh":
+                    repo.refuse(REFUSALS["not_green"], item=item,
+                                reason="GitHub has not started the failed test jobs again")
+                if not late:
+                    if suite in suites:
                         print("Started the failed test jobs again once; waiting for them.", flush=True)
-                        decided[suite] = PENDING
-                elif repo.run("gh", "run", "rerun", str(current["id"]), "--failed",
-                              cwd=top, timeout=60).returncode == 0:
-                    print(f"Run {current['id']} was cancelled. Started it again; waiting for it.", flush=True)
+                    else:
+                        print(f"Run {current['id']} was cancelled. Started it again; waiting for it.", flush=True)
                     decided[suite] = PENDING
             elif suite in suites and suite in retry_suites:
                 _pending(item, [], seen)  # A second test timeout is a failure too: send it to work.

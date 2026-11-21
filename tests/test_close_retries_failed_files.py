@@ -25,9 +25,14 @@ STORY = "close-reruns-failed-tests-once"
         sys.platform == "win32", reason="pytest-timeout signal recovery needs POSIX")),
     pytest.param(False, True, "direct", "timeout", marks=pytest.mark.skipif(
         sys.platform == "win32", reason="pytest-timeout signal recovery needs POSIX")),
+    pytest.param(False, False, "direct", "setup-timeout", marks=pytest.mark.skipif(
+        sys.platform == "win32", reason="pytest-timeout signal recovery needs POSIX")),
+    pytest.param(False, False, "direct", "teardown-timeout", marks=pytest.mark.skipif(
+        sys.platform == "win32", reason="pytest-timeout signal recovery needs POSIX")),
 ], ids=["new-client-flaky", "new-client-red",
         "chain-green", "chain-red-integration",
-        "picker-always-green", "picker-always-red", "timeout-recovers", "timeout-stays-red"])
+        "picker-always-green", "picker-always-red", "timeout-recovers", "timeout-stays-red",
+        "setup-timeout-stays-red", "teardown-timeout-stays-red"])
 def test_1_close_retries_only_failed_files_once(env, adopted, persistent, mode, failure):
     # Audit: protects close's observable retry scope, limit and decision. An order-dependent
     # client test reproduces the lost round; existing close tests have no recovering failure.
@@ -70,6 +75,17 @@ def test_1_close_retries_only_failed_files_once(env, adopted, persistent, mode, 
             + "        log.write('fail\\n')\n"
             + f"    if {persistent!r} or Path({json.dumps(log.as_posix())}).read_text('utf-8').count('fail\\n') == 1:\n"
             + "        threading.Event().wait()\n")
+    if failure in ("setup-timeout", "teardown-timeout"):
+        phase = failure.split("-", 1)[0]
+        fixture = (record + f"        log.write('{phase}\\n')\n"
+                   + f"    if Path({json.dumps(log.as_posix())}).read_text('utf-8').count('{phase}\\n') == 1:\n"
+                   + "        threading.Event().wait()\n")
+        files["client tests/test_b.py"] = (
+            "import pytest, threading\nfrom pathlib import Path\n"
+            "@pytest.fixture(autouse=True)\ndef delayed_fixture():\n"
+            + (fixture + "    yield\n" if phase == "setup" else "    yield\n" + fixture)
+            + "@pytest.mark.timeout(0.2, method='signal')\ndef test_order():\n"
+            + record + "        log.write('fail\\n')\n")
     if mode == "chain":
         files["integration tests/test_integration.py"] = "def test_integration():\n" + record \
             + "        log.write('integration\\n')\n    assert " + str(not persistent) + "\n"
@@ -87,6 +103,10 @@ def test_1_close_retries_only_failed_files_once(env, adopted, persistent, mode, 
                 ["pass", "fail"])
     if failure == "timeout":
         expected.append("fail")
+    elif failure == "setup-timeout":
+        expected = ["pass", "setup"]
+    elif failure == "teardown-timeout":
+        expected.append("teardown")
     assert log.read_text("utf-8").splitlines() == expected, closed.stdout + closed.stderr
     recovered = failure == "timeout" and not persistent
     assert (closed.returncode == 0) == recovered, closed.stdout + closed.stderr

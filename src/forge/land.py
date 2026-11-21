@@ -293,21 +293,28 @@ def _own(check: dict, skip: set[int]) -> bool:
 def _failed_logs(top: Path, branch: str, skip: set[int] = frozenset()) -> dict[str, list[str]] | None:
     """Run id to the full failed-job logs of the checks that failed, leaving out Forge's own review (its
     status, and the "Review pull request" job of a run in skip). None when any other failing check is not
-    a "fail" with a job link, or its log cannot be read."""
+    a "fail" with a job link."""
     listed = _listed(top, branch)
     if listed is None:
         return None
-    runs: dict[str, list[str]] = {}
+    failed: dict[str, list[tuple[str, str]]] = {}
     for check in listed:
         if check.get("bucket") in ("pass", "skipping") or _own(check, skip):
             continue
         job = re.search(r"/runs/(\d+)/job/(\d+)", check.get("link") or "")
         if check.get("bucket") != "fail" or not job:
             return None
-        log = repo.run("gh", "run", "view", "--job", job[2], "--log-failed", cwd=top)
-        if log.returncode:
-            return None
-        runs.setdefault(job[1], []).append(log.stdout)
+        failed.setdefault(job[1], []).append((check.get("name", ""), job[2]))
+    runs: dict[str, list[str]] = {}
+    for run, jobs in failed.items():
+        groups = any(re.fullmatch(r"test group \d+ of \d+", name) for name, _ in jobs)
+        for name, job_id in jobs:
+            if groups and name == "tests":
+                continue  # The generated aggregate can fail its shell check after a failed group.
+            text = _job_log(top, job_id)
+            if text is None:
+                return None
+            runs.setdefault(run, []).append(text)
     return runs
 
 
@@ -317,13 +324,47 @@ def _names(logs: dict[str, list[str]], paths) -> bool:
                for texts in logs.values() for text in texts for path in paths)
 
 
-def _infrastructure(text: str) -> bool:
+PYTEST_TIMEOUT = r"Failed: Timeout (?:>[^\s]+s|\(>[^\s]+s\) from pytest-timeout\.)"
+
+
+def _product_failure(text: str) -> bool:
+    # Inspect failure reports, not rendered source such as threading.py's RuntimeError.
     return bool(re.search(
-        r"The runner has lost communication with the server|The hosted runner.*lost communication|"
-        r"the runner lost its network|The job(?: running on runner .*)? exceeded the maximum execution time|"
-        r"The runner.*(?:shutdown|shut down)|Failed: Timeout \(>[^\s]+s\) from pytest-timeout\.",
-        text, re.I)) and not re.search(
-            r"AssertionError|Error: expect|FAILED [^\n]+ - (?!Failed: Timeout)", text)
+        r"AssertionError|Error: expect|\bERROR (?:at |collecting |[^\n]+ - )|"
+        r"\bE\s+(?:\w*(?:Error|Exception):|assert\b|Failed: (?!Timeout (?:>|\(>)))", text)
+        or any(not re.fullmatch(PYTEST_TIMEOUT, failure.strip())
+               for failure in re.findall(r"\bFAILED [^\n]+ - ([^\n]+)", text)))
+
+
+def _infrastructure(text: str) -> bool:
+    return not _product_failure(text) and bool(re.search(
+        r"The (?:self-hosted |hosted )?runner[^\n]*lost communication|"
+        r"the runner lost its network|The job(?: running on runner [^\n]*)? (?:has )?exceeded the maximum execution time|"
+        r"The runner[^\n]*(?:shutdown|shut down)|" + PYTEST_TIMEOUT, text, re.I))
+
+
+def _job_log(top: Path, job: str, run: str = "", conclusion: str = "") -> str | None:
+    """Read test output, or GitHub's runner-loss annotation when no log survived."""
+    # gh's failed-step filter omits cancelled jobs and cancelled steps of a timed-out job.
+    option = "--log" if conclusion in ("cancelled", "timed_out") else "--log-failed"
+    log = repo.run("gh", "run", "view", *([run] if run else []), "--job", job, option, cwd=top)
+    text = log.stdout
+    if _product_failure(text):
+        return text
+    if not log.returncode and (conclusion in ("cancelled", "timed_out") or _infrastructure(text)):
+        return text
+    if log.returncode and "log not found" not in (log.stderr + log.stdout).lower():
+        return None
+    try:
+        jobs = checks._ask(top, "", "[.]", f"repos/{{owner}}/{{repo}}/actions/jobs/{job}")
+        url = jobs[0].get("check_run_url") if jobs else None
+        annotations = checks._ask(top, "", ".", f"{url}/annotations") if url else []
+    except repo.Refused:
+        annotations = []
+    evidence = "\n".join(str(entry.get("message", "")) for entry in annotations)
+    if _infrastructure(evidence):
+        return text + "\n" + evidence
+    return text if not log.returncode else None
 
 
 def _restart(top: Path, runs: list[str], logs: dict[str, list[str]] | None = None) -> str:
@@ -343,15 +384,15 @@ def _restart(top: Path, runs: list[str], logs: dict[str, list[str]] | None = Non
             jobs = []
         failed = [job for job in jobs if job.get("conclusion") in
                   ("failure", "cancelled", "timed_out", "startup_failure")]
-        groups = any(re.fullmatch(r"test group \d+ of \d+", job.get("name", "")) for job in failed)
         if not failed:
             return "gh"
+        groups = any(re.fullmatch(r"test group \d+ of \d+", job.get("name", "")) for job in failed)
         for job in failed:
-            if job.get("conclusion") != "failure" or groups and job.get("name") == "tests":
-                continue  # The generated aggregate mirrors its failed test groups.
-            log = repo.run("gh", "run", "view", run, "--job", str(job.get("databaseId", "")),
-                           "--log-failed", cwd=top)
-            if log.returncode or not _infrastructure(log.stdout):
+            if groups and job.get("name") == "tests":
+                continue  # The generated aggregate can fail its shell check after a failed group.
+            text = _job_log(top, str(job.get("databaseId", "")), run, job.get("conclusion", ""))
+            if (text is None or _product_failure(text)
+                    or job.get("conclusion") not in ("cancelled", "timed_out") and not _infrastructure(text)):
                 return "gh"
     for run in runs:
         if repo.run("gh", "run", "rerun", run, "--failed", cwd=top).returncode:

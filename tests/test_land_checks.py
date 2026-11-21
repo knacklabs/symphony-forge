@@ -26,12 +26,25 @@ PASSING = ('test_place = "ci"\nmerge = "agent"\ntest = "true"\nfast_test = "true
 
 
 def _failing(env, *checks: tuple[str, str, str], attempts: tuple[str, ...] = ('{"attempt": 1}',
-                                                                              '{"attempt": 2}')):
+                                                                              '{"attempt": 2}'),
+             annotations: dict[str, list[dict]] | None = None,
+             unavailable_logs: set[str] | None = None):
     """Failing checks on the pull request, each (name, link, failed log); run 5's attempts."""
     env.gh.respond("pr", "checks", exit=1, stdout=json.dumps(
         [{"name": name, "bucket": "fail", "link": link} for name, link, _ in checks]))
     for _, link, log in checks:
-        env.gh.respond("run", "view", "--job", link.rsplit("/", 1)[-1], stdout=log)
+        job_id = link.rsplit("/", 1)[-1]
+        if unavailable_logs and job_id in unavailable_logs:
+            env.gh.respond("run", "view", "--job", job_id, stderr="HTTP 404: log not found\n", exit=1)
+        else:
+            env.gh.respond("run", "view", "--job", job_id, stdout=log)
+        if annotations and job_id in annotations:
+            check_run = f"https://api.github.com/repos/acme/shop/check-runs/{job_id}01"
+            env.gh.respond("api", "--paginate", "--jq", "[.][]",
+                           f"repos/{{owner}}/{{repo}}/actions/jobs/{job_id}",
+                           stdout=json.dumps({"check_run_url": check_run}))
+            env.gh.respond("api", "--paginate", "--jq", ".[]", f"{check_run}/annotations",
+                           stdout=json.dumps(annotations[job_id]))
     if attempts:
         _queue(env, ["run", "view", "5", "--json", "attempt"], *attempts)
     env.gh.respond("run", "rerun")
@@ -65,6 +78,26 @@ def _unrelated_rerun_once(env):
     assert _reruns(env) == [["run", "rerun", "5", "--failed"]]
     assert not _workers(env)
     assert len(env.gh_calls("pr", "merge")) == 1
+
+
+def _annotation_only_runner_loss(env, unavailable=False):
+    _red_then_green(env)
+    annotation = {"title": "Runner lost communication",
+                  "message": "The self-hosted runner: edx-platform-openedx-ci-runner lost communication with the server."}
+    options = {"annotations": {"9": [annotation]}}
+    if unavailable:
+        options["unavailable_logs"] = {"9"}
+    _failing(env, ("tests", LINK.format(9), ""), **options)
+    done = _land(env)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert _steps(done) == [f"Closing {ITEM}.", RERUN.format("tests"), f"Closing {ITEM}.",
+                            f"Merging {ITEM}."]
+    assert _reruns(env) == [["run", "rerun", "5", "--failed"]]
+    assert not _workers(env)
+
+
+def _annotation_only_runner_loss_when_log_archive_is_missing(env):
+    _annotation_only_runner_loss(env, unavailable=True)
 
 
 def _log_names_changed_file(env, named):
@@ -175,6 +208,7 @@ def _attempt_never_rises(env):
 
 
 FOUR = [_unrelated_rerun_once, "src/app.py", "src\\app.py", "tests/unchanged.py",
+        _annotation_only_runner_loss, _annotation_only_runner_loss_when_log_archive_is_missing,
         _already_second_attempt, _one_of_two_names_a_changed_file, _two_jobs_one_run,
         _status_without_a_job, _attempt_unreadable, _log_unreadable, _non_ascii_name,
         _renamed_old_path, _rerun_refused, _fails_again, _attempt_never_rises]

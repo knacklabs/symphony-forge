@@ -25,8 +25,9 @@ def _group(conclusion, status="completed"):
 
 @pytest.mark.parametrize("command", ["close", "merge", "land"])
 @pytest.mark.parametrize("failure,second", [
-    (failure, second) for failure in ("timed_out", "cancelled", "runner-loss")
-    for second in ("success", "failure", "timed_out", "cancelled")
+    ("runner-loss", second) for second in ("success", "failure", "timed_out", "cancelled")
+] + [(failure, "success") for failure in ("timed_out", "cancelled", "pytest-timeout-2.3",
+                                             "pytest-timeout-2.4", "fixture-error")
 ] + [("failure", "failure"), ("mixed", "failure")])
 def test_1_failed_test_jobs_retry_once_and_wait(clock, monkeypatch, command, failure, second):
     monkeypatch.setenv("FORGE_CHECKS_WAIT", "600")
@@ -50,15 +51,36 @@ def test_1_failed_test_jobs_retry_once_and_wait(clock, monkeypatch, command, fai
         closed = clock.repo.forge("close", ITEM)
         assert closed.returncode == 0, closed.stdout + closed.stderr
     clock.gh.respond("run", "view", stdout='{"attempt": 2}')
-    conclusion = "failure" if failure in ("runner-loss", "mixed") else failure
+    conclusion = "failure" if failure in ("runner-loss", "mixed", "pytest-timeout-2.3",
+                                           "pytest-timeout-2.4", "fixture-error") else failure
     clock.gh.respond("run", "view", "77", "--json", "jobs", stdout=json.dumps({"jobs": [
         {"name": "test group 1 of 2", "conclusion": conclusion, "databaseId": 701},
         {"name": "tests", "conclusion": "failure", "databaseId": 702},
     ]}))
-    clock.gh.respond("run", "view", "77", "--job", "701", "--log-failed", stdout=(
-        "The runner has lost communication with the server." if failure == "runner-loss"
-        else "The runner has lost communication with the server.\nAssertionError: assert 1 == 2" if failure == "mixed"
-        else "FAILED tests/test_app.py::test_total - AssertionError: assert 1 == 2"))
+    group_log = {
+        "runner-loss": "",
+        "mixed": "The runner has lost communication with the server.\nAssertionError: assert 1 == 2",
+        "pytest-timeout-2.3": "FAILED tests/test_app.py::test_total[one - two] - Failed: Timeout >0.2s",
+        "pytest-timeout-2.4": "FAILED tests/test_app.py::test_total[one - two] - Failed: Timeout (>0.2s) from pytest-timeout.",
+        "fixture-error": ("The job exceeded the maximum execution time\n"
+                          "ERROR at setup of test_app.py::test_total\nE RuntimeError: fixture failed"),
+    }.get(failure, "FAILED tests/test_app.py::test_total - AssertionError: assert 1 == 2")
+    if conclusion in ("cancelled", "timed_out"):
+        # gh's failed-step filter omits cancelled jobs/steps, even after a test failed.
+        clock.gh.respond("run", "view", "77", "--job", "701", "--log-failed", stdout="")
+    clock.gh.respond("run", "view", "77", "--job", "701",
+                     "--log" if conclusion in ("cancelled", "timed_out") else "--log-failed",
+                     stdout=group_log)
+    clock.gh.respond("run", "view", "77", "--job", "702", "--log-failed",
+                     stdout="Error: Process completed with exit code 1")
+    if failure == "runner-loss":
+        check_run = "https://api.github.com/repos/acme/shop/check-runs/801"
+        clock.gh.respond("api", "--paginate", "--jq", "[.][]",
+                         "repos/{owner}/{repo}/actions/jobs/701",
+                         stdout=json.dumps({"check_run_url": check_run}))
+        clock.gh.respond("api", "--paginate", "--jq", ".[]", f"{check_run}/annotations",
+                         stdout=json.dumps([{"title": "Runner lost communication",
+                                             "message": "The self-hosted runner: edx-platform-openedx-ci-runner lost communication with the server."}]))
     failed = [_group(conclusion),
               _check("test group 2 of 2", "success"), _check("tests", "failure"), OTHER]
     retrying = [_group(None, "in_progress"), _check("test group 2 of 2", "success"),
@@ -72,7 +94,7 @@ def test_1_failed_test_jobs_retry_once_and_wait(clock, monkeypatch, command, fai
         looks.append([_group("success"), _check("test group 2 of 2", "success"),
                       _check("tests", "failure"), OTHER])
         workflows.append(_workflow(5, 77, None, "in_progress", attempt=2))
-    if failure in ("failure", "mixed"):
+    if failure in ("failure", "mixed", "timed_out", "cancelled", "fixture-error"):
         _queue(clock, RUNS, *_runs(failed))
         _queue(clock, RUN_LIST, _workflow(5, 77, "failure"))
     else:
@@ -82,7 +104,7 @@ def test_1_failed_test_jobs_retry_once_and_wait(clock, monkeypatch, command, fai
 
     done = clock.repo.forge(command, ITEM)
 
-    if failure in ("failure", "mixed"):
+    if failure in ("failure", "mixed", "timed_out", "cancelled", "fixture-error"):
         assert not clock.gh_calls("run", "rerun"), done.stdout + done.stderr
         assert done.returncode == 1, done.stdout + done.stderr
         assert "Started the failed test jobs again once" not in done.stdout
@@ -134,6 +156,13 @@ def test_2_other_failures_and_used_attempts_do_not_restart_ci(clock, monkeypatch
                              "completed_at": failed[0]["completed_at"],
                          }))
     if stop == "cancelled-first":
+        clock.gh.respond("run", "view", "77", "--json", "jobs", stdout=json.dumps({"jobs": [
+            {"name": "tests", "conclusion": "cancelled", "databaseId": 701},
+        ]}))
+        clock.gh.respond("run", "view", "77", "--job", "701", "--log-failed",
+                         stdout="")
+        clock.gh.respond("run", "view", "77", "--job", "701", "--log",
+                         stdout="FAILED tests/test_app.py::test_total - AssertionError: assert 1 == 2")
         _queue(clock, RUNS, *_runs([_check("tests", "cancelled"), OTHER], failed))
         _queue(clock, RUN_LIST, _workflow(5, 77), _workflow(5, 77, "failure", attempt=2))
     else:
@@ -142,8 +171,7 @@ def test_2_other_failures_and_used_attempts_do_not_restart_ci(clock, monkeypatch
 
     done = clock.repo.forge("close", ITEM)
 
-    expected = [["run", "rerun", "77", "--failed"]] if stop == "cancelled-first" else []
-    assert clock.gh_calls("run", "rerun") == expected, done.stdout + done.stderr
+    assert not clock.gh_calls("run", "rerun"), done.stdout + done.stderr
     assert done.returncode == 1, done.stdout + done.stderr
     if timeout:
         assert "the tests ran out of time after 60 minutes" in done.stderr
