@@ -13,7 +13,6 @@ Test-audit for the record-history cases below:
 import json
 import os
 import re
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -149,7 +148,8 @@ def _run_workflow_step(script, client, variables):
         bash = "bash"
         if sys.platform == "win32":
             # PATH can select WSL's bash even though WSL has no Linux installed.
-            git = Path(shutil.which("git")).resolve()
+            git = Path(subprocess.check_output(
+                ["git", "--exec-path"], text=True, timeout=30).strip()).resolve()
             bash = next((str(parent / "bin/bash.exe") for parent in git.parents
                          if (parent / "bin/bash.exe").is_file()), None)
             if bash is None:
