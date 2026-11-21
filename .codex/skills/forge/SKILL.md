@@ -2478,7 +2478,9 @@ After upgrading, run `forge sync` to receive
 the tests workflow's quick pass: it reuses the latest completed attempt for the same code across
 Forge record commits under `.factory/` or `plans/spotted/`, including record-only merges.
 Other files under `plans/` do not qualify for this quick pass. Close waits for earlier same-code retries before pushing
-records. The pull request workflow reads the branch's last 30 runs in one request and shares
+records. With no pull request or no active test run, close publishes its records first;
+the normal final check gate still runs after push and pull request creation.
+The pull request workflow reads the branch's last 30 runs in one request and shares
 the result with its test groups. A newer attempt's result takes precedence even when GitHub
 keeps its original run identifier.
 Any change outside those records runs the suite on the pull request merged into its current base.

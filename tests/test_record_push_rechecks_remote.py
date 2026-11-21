@@ -19,6 +19,7 @@ def test_4_rejected_record_push_waits_for_the_new_remote_run(env, tmp_path, monk
     # Ordinary close waits cannot observe this new remote-head lifecycle.
     # Reversing a default choice must use the same checked push as an ordinary choice.
     item, where = env.start_fix(stop={"file": "app.py", **({"by": "default"} if defaulted else {})})
+    env.open_pr("")  # The queued remote run belongs to this pull request.
     env.repo.git("push", "-q", "-u", "origin", "fix/tidy-readme", cwd=where)
     parent = env.repo.git("rev-parse", "HEAD", cwd=where)
     writer = tmp_path / "other-machine"

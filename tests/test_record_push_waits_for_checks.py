@@ -33,6 +33,7 @@ def test_1_record_push_waits_until_the_running_code_ci_run_ends(env, tmp_path, m
     env.repo.git("commit", "-q", "-m", "Tests run in CI")
     env.repo.git("push", "-q", "origin", "main")
     item, where = env.start_fix()
+    env.open_pr("")
     env.repo.git("push", "-q", "-u", "origin", "fix/tidy-readme", cwd=where)
     earlier = conclusion.startswith("earlier-")
     code_head = env.repo.git("rev-parse", "HEAD", cwd=where)
@@ -146,3 +147,40 @@ def test_1_record_push_waits_until_the_running_code_ci_run_ends(env, tmp_path, m
     assert record[3] >= polls + 1, "close pushed its review record while the code's CI run was still going"
     notices = [json.loads(line) for line in progress.read_text("utf-8").splitlines()]
     assert all(after[0] - before[0] >= 300 for before, after in zip(notices, notices[1:])), notices
+
+
+@pytest.mark.platform
+@pytest.mark.parametrize("pull_request", [False, True], ids=["no-pr", "no-check"])
+def test_8_published_code_without_started_ci_closes_without_a_pre_push_wait(env, pull_request):
+    # Audit: close must publish and open its first PR when no earlier CI can report.
+    # Waiting on a missing required check previously stopped that real command.
+    # Existing cases own active workflows, including queued runs without job checks;
+    # they cannot exercise a branch that has no workflow yet. Extend this owner.
+    # Only GitHub's edge is fake; real git pushes and the normal close need no seam.
+    config = (env.repo.path / "forge.toml").read_text("utf-8")
+    env.commit(env.repo.path, "forge.toml", config + '\ntest_place = "ci"\n', "Use CI tests")
+    env.repo.git("push", "-q", "origin", "main")
+    item, where = env.start_fix()
+    branch = f"fix/{item}"
+    env.repo.git("push", "-q", "-u", "origin", branch, cwd=where)
+    published = env.repo.git("rev-parse", "HEAD", cwd=where)
+    if pull_request:
+        env.open_pr("")
+    # No check or queued workflow exists on the published code. The later record
+    # push starts the PR's checks, which the fixture reports green on its new head.
+    env.gh.respond("api", "--paginate", "--jq", ".check_runs[]",
+                   f"repos/{{owner}}/{{repo}}/commits/{published}/check-runs?per_page=100", stdout="")
+
+    closed = env.close(item)
+
+    assert closed.returncode == 0, closed.stdout + closed.stderr
+    assert "Ready:" in closed.stdout
+    assert "Waiting: the code's checks are still queued or running." not in closed.stdout
+    if not pull_request:
+        assert "Opened the pull request:" in closed.stdout
+        assert len(env.gh_calls("pr", "create")) == 1
+    else:
+        assert not env.gh_calls("pr", "create")
+    head = env.repo.git("rev-parse", "HEAD", cwd=where)
+    remote = env.repo.git("ls-remote", "origin", f"refs/heads/{branch}", cwd=where).split()[0]
+    assert remote == head and remote != published, "The saved review never reached the branch"

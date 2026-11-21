@@ -276,6 +276,8 @@ $delegation
   in your next round. Close saves the review before this push. A push that changes only Forge
   records waits for the published code's checks and earlier same-code retries to report,
   even with a blocked review.
+  With no pull request or no active test run, close publishes its records first;
+  the normal final check gate still runs after push and pull request creation.
   A refusal, wait limit or Ctrl-C still publishes saved records before close exits.
   Records can also travel with the next code push. Only `.factory/` and `plans/spotted/`
   records reuse the latest completed attempt of the same code and base, including across record-only

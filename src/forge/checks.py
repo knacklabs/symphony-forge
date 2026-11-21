@@ -188,12 +188,11 @@ def _let_finish(top: Path, item: str, sha: str, names: list[str], branch: str,
             failed = False
             try:
                 _recover(top, item, sha, names, runs, seen)
-                missing = _pending(item, [name for name in names if name != "forge-pr-check"], seen)
+                _pending(item, [name for name in names if name != "forge-pr-check"], seen)
             except repo.Refused as error:
                 if error.entry not in (REFUSALS["red"], REFUSALS["timeout"]):
                     raise
-                failed = True
-                missing = ""  # Still let an earlier same-code retry finish before publishing.
+                failed = True  # Still let an earlier same-code retry finish before publishing.
             states = [] if failed else [state for _, state in seen]
             # Active jobs already keep the wait open. Recovery also reads their workflow;
             # another read here can get ahead of its still-stale aggregate check.
@@ -221,7 +220,9 @@ def _let_finish(top: Path, item: str, sha: str, names: list[str], branch: str,
             states.extend(QUEUED if run.get("status") == "queued" else PENDING
                           for run in workflows if run.get("status") != "completed")
             active = any(state in (PENDING, QUEUED) for state in states)
-            if not active and (not missing or workflows):
+            # Missing checks belong to the final gate after push. Only existing
+            # queued or running CI can be cancelled by publishing these records.
+            if not active:
                 return
             now = time.monotonic()
             if explicit and timeout > 0 and QUEUED in states:
@@ -243,6 +244,7 @@ def _let_finish(top: Path, item: str, sha: str, names: list[str], branch: str,
 def after_code_ci(top: Path, item: str, branch: str, cfg: dict[str, Any],
                   slot: Callable[[bool], None] | None = None) -> None:
     """Let the code's CI run end before close pushes only Forge's records on top of it."""
+    from forge import close
     # Three dots: a replayed branch, whose remote head is no ancestor, shows its code and is skipped.
     # A branch with no remote head yet makes the diff fail, so nothing is running to wait for.
     changed = repo.run("git", "diff", "--name-only", "-z", "--no-renames", f"origin/{branch}...HEAD", cwd=top)
@@ -252,7 +254,7 @@ def after_code_ci(top: Path, item: str, branch: str, cfg: dict[str, Any],
                    for path in paths)):
         return
     remote, head = repo.git("rev-parse", f"origin/{branch}", "HEAD", cwd=top).splitlines()
-    if remote == head:
+    if remote == head or close._pull_request(top, branch) is None:
         return
     let_finish(top, item, remote, cfg["checks"], branch, slot)
 
