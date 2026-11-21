@@ -57,7 +57,7 @@
       "gain": 3,
       "harm": 3,
       "line": 59,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -67,58 +67,48 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "4a792fb69df80e069e48c4ea2cb5793ff4d97a28e9489db7e03045f2a81c52fd",
-    "changed": "6795ff3b2793ac32ae28774ce4d1544e26dbc9716f17bdcfafbbf0c45c7f0aba",
-    "commit": "3e2624219ef0a9df029cddf3443af5a196ddf3c4",
+    "branch_diff": "57a611e11368844beea0a596b85000c567b7bf71271ea520e85d6cc6958d6ce1",
+    "changed": "fc1c5739a4909b5f183db9b84cec6aca184ed831801cdb40c6ca51041afc91e7",
+    "commit": "2832a4f5c0023e74edbfa1bfc1dffe8ac667b727",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a multi-group Python repo has Forge available in its select job and configures a direct pytest command as fast_test, as the guide permits for excluding browser tests. The new calculation counts related()'s selection, but src/forge/review.py:364-379 runs fast_test directly. If six changed source files select no Python tests, this returns one group even though that command runs the entire pytest suite; previously the six-file case retained the configured groups. A large suite can again time out. The same mismatch occurs for mixed Python/Vitest commands and for the full-command fallback in src/forge/fasttest.py:313-335, whose additional work is absent from this count.",
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a pytest repo uses `python_files = test_*.py *_spec.py`, has no `always_test`, and a source change selects two of twelve `test_*.py` files. `related()` in src/forge/fasttest.py:408-411 does not count the `_spec.py` files, but pytest collects them under that configuration. The selection hook at src/forge/fasttest.py:530-532 does not filter them when there are no always tests. The calculation here therefore chooses one group for 2/12 while the command also runs every `_spec.py` test, risking the original timeout. [Pytest supports configuring these discovery patterns.](https://docs.pytest.org/en/stable/example/pythoncollection.html) The full-command fallback also remains reachable with one group: with no `fast_test`, the test-only shortcut at line 105 runs before the mixed-command fallback in src/forge/fasttest.py:313-320 is checked.",
         "file": "src/forge/templates/review-tests.py",
         "gain": 4,
         "harm": 3,
-        "line": 104,
+        "line": 131,
         "priority": "P1",
         "title": "Keep all groups when the PR command runs a wider test set",
         "work": 2
       },
       {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a multi-project repo runs 20 API test files with pytest apps/api/tests, while 80 checked-in example or starter test files are outside that command. src/forge/fasttest.py:408-411 counts all 100 tracked Python test files, even though only the 20 API files can run. A central API change selecting all 20 is therefore classified as 20% and assigned one group, despite selecting the entire configured suite. That can reproduce the timeout this fix is meant to prevent. This repository itself contains starter-app tests outside its configured pytest tests root.",
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a repo runs `pytest tests -q`, with 20 live tests and 80 fixture-repository tests under `tests/fixtures` excluded by pytest's `norecursedirs = fixtures`. A central change selects all 20 live tests. This prefix check still includes the 80 excluded files in the denominator, so it classifies the entire runnable suite as 20% and assigns one group. src/forge/fasttest.py:44-67 reads pytest's `addopts` but does not account for `norecursedirs`; [pytest excludes matching directories from collection](https://docs.pytest.org/en/stable/example/pythoncollection.html). The original timeout can therefore recur.",
         "file": "src/forge/templates/review-tests.py",
         "gain": 4,
         "harm": 3,
-        "line": 107,
+        "line": 128,
         "priority": "P1",
         "title": "Count only test files belonging to the configured suite",
         "work": 2
       },
       {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a Python pull request selects two of twelve test files on a generated GitHub-hosted workflow. The docs-check job in src/forge/prcheck.py:61-81 checks out the repo and sets up Python but never installs Forge or supplies its source on PYTHONPATH, so this import fails and the fallback always selects every group. The ruling allowed all groups when the selector is unavailable; the new evidence is that the standard job makes it unavailable on every run. Separately, for automatically split pytest commands without explicit {groups}, src/forge/prcheck.py:409-413 hard-codes one-group to false even if the selector is available. The positive one-group choice therefore does not reach either normal configuration.\nDone when: The one-group choice in review-tests.py uses the size of the selected test set (one group only when the selected tests are a small share of all tests, for example under a quarter, or the selection is small in absolute terms), not the changed-file count, so a small change to a central file runs all configured groups; new and existing repos get it on upgrade and forge sync",
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - Forge's own forge.toml:7-8 uses `uv run --frozen --python 3.11 forge test --pytest {base}` as `fast_test`. This exact-string guard rejects that picker even after the generated job installs Forge, so a narrow source change still runs all six groups. The later argument check at line 123 also rejects the `-o` and timeout options in Forge's configured pytest command. tests/test_selected_tests_choose_groups.py:25-32 replaces those settings with an unwrapped picker and simpler pytest command, so it passes without covering the shipped configuration.\nDone when: The one-group choice in review-tests.py uses the size of the selected test set (one group only when the selected tests are a small share of all tests, for example under a quarter, or the selection is small in absolute terms), not the changed-file count, so a small change to a central file runs all configured groups; new and existing repos get it on upgrade and forge sync",
         "file": "src/forge/templates/review-tests.py",
         "gain": 4,
         "harm": 3,
-        "line": 98,
+        "line": 103,
         "priority": "P1",
         "required_done_when": true,
         "title": "Not done: The one-group choice does not reach normal generated CI jobs",
         "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - a source pull request uses the generated test job. tests/test_selected_tests_choose_groups.py:53-57 injects the Forge source into PYTHONPATH, which the generated select job does not do, so its positive case passes while that job always falls back to all groups. The changed expectation here also accepts one group for six source files while the fixture's fast_test is direct pytest over all five test files; it evaluates only the matrix and never runs that command. The prior six-file expectation was two groups. These proofs therefore pass while both the small-selection optimization and the full-suite timeout protection are broken.",
-        "file": "tests/test_small_change_runs_one_group.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 59,
-        "priority": "P1",
-        "title": "Gate: selected-group tests do not prove the generated CI behavior",
-        "work": 2
       }
     ],
-    "id": "2400ac7b-76a6-47c2-8601-39d5ae0b67e5",
+    "id": "ff5acf02-dc48-4f3c-aa54-721074b0f525",
     "status": "blocked"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-21T02:11:45.091877+00:00",
@@ -142,8 +132,22 @@
       "at": "2026-11-21T02:29:09.818923+00:00",
       "round": 3,
       "step": "resume"
+    },
+    {
+      "at": "2026-11-21T02:44:36.867171+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-21T02:44:36.884624+00:00",
+      "round": 3,
+      "step": "hold"
     }
   ],
+  "stop": {
+    "at": "2026-11-21T02:44:36.884624+00:00",
+    "file": "src/forge/templates/review-tests.py",
+    "wait_id": "7bd4aded-84b7-422d-a63a-8f36c2e46272"
+  },
   "stuck": {
     "close": "4ecef102-06c9-491a-8d80-f414d528b1ad",
     "head": "4429a5f85e1d2141a7b616262707c8981de02a45",
