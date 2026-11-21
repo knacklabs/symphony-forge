@@ -146,44 +146,12 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "8c8d01eab7108f69be2679fdb746918c6e5f17e0992839ce13bb6a2e67bc79b7",
-    "changed": "31958b951f93359af10de987b6ce18158892b952570c9f17f746eb9632b892f6",
-    "commit": "a84145762f0ed10636c975d17c032b1f120af9f3",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner accepted on 20 Nov 2026: a hand rerun of the original test run after more than about 15 record pushes may be missed; known issue for v1.2.46",
-        "finding": 1
-      },
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner accepted on 20 Nov 2026: a hand rerun of the original test run after more than about 15 record pushes may be missed; known issue for v1.2.46",
-        "finding": 2
-      }
-    ],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - After 17 record pushes, the workflow's pull-request and pull-request-target events have produced more than 30 runs. The first page can omit the original code run even after it is retried: GitHub orders runs by creation time, and a retry retains the original creation time. If that retry fails after the record runs inherited a pass, this lookup selects an inherited pass and reports green without testing; a successful retry of a failure can likewise remain red. The 17-commit test at `tests/test_record_only_failed_results.py:302-308` supplies only the original run in its fake response, so it misses the truncated page. The shipped copy has the same limit at `.forge/review-tests.py:297`. [GitHub workflow-run ordering](https://github.com/orgs/community/discussions/24372); [retry timestamp behavior](https://arxiv.org/html/2611.00667v1).",
-        "file": "src/forge/templates/review-tests.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 122,
-        "priority": "P1",
-        "title": "Select the latest completed attempt when reusing a result",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - After 17 record pushes, the branch history contains more than this request's 30-run page from Forge's two pull-request events alone. If someone retries the original code run while the latest record head is green, the retry retains the original run's creation time and falls outside the page. `_seen` checks only the green record head, so close pushes another record commit and cancels the active retry. The earlier-running test at `tests/test_record_push_waits_for_checks.py:95-104` supplies only two runs and does not exercise the truncated history. [GitHub workflow-run ordering](https://github.com/orgs/community/discussions/24372); [retry timestamp behavior](https://arxiv.org/html/2611.00667v1).",
-        "file": "src/forge/checks.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 204,
-        "priority": "P1",
-        "title": "Wait for retries on earlier same-code heads",
-        "work": 2
-      }
-    ],
-    "id": "045d4195-efa6-4e1c-b474-8feb646a65b8",
+    "branch_diff": "e9038b243b4edd1e8211a4ac4f10818aa7738642bfc237aa13d5428a483211d5",
+    "changed": "7cd19aa9df1df53da81acadbbf989e52ae26ae5b8973cb6167ec2384fb7f568d",
+    "commit": "127f255abca7e03096f31e72b7a52f2b376be38d",
+    "dismissals": [],
+    "findings": [],
+    "id": "3d780833-7df2-4b59-8b64-d534caca62e3",
     "status": "clean"
   },
   "round": 4,
@@ -252,6 +220,10 @@
       "choice": "accept",
       "round": 4,
       "step": "owner decision"
+    },
+    {
+      "at": "2026-11-21T04:26:25.370990+00:00",
+      "step": "review"
     }
   ],
   "stop": {
