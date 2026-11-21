@@ -288,8 +288,9 @@ $delegation
   commit and stop instead of asking the coordinator to push or run CI. CI is the merge gate. Commit
   your local proof in the `Proof list:` without waiting for CI results or timings.
 - Close and doctor cancel only this pull request's older forge.yml runs when they block its newest queued run. Client workflows stay untouched. If a run stays active after cancellation, Forge prints GitHub's force-cancel command for the operator. It never calls that command automatically. Close keeps waiting for the new run.
-- On new and upgraded repos, close and merge retry only the failed jobs once when only CI test
-  groups fail or time out. They wait for that attempt. Cancelled runs use the same retry limit.
+- On new and upgraded repos, close and merge retry failed CI test jobs once only after runner
+  loss, cancellation or timeout. Assertion failures get no retry. They wait for that attempt.
+  Cancelled runs use the same retry limit.
   A second failure sends the item to `forge work`. For other test timeouts, rerun the tests job
   or split the suite. Generated pull request and nightly test jobs
   each get 60 minutes. The nightly run uses the repo's groups and records one
@@ -299,10 +300,10 @@ $delegation
   the review reads only what is committed.
 - Follow the test-place instructions below to decide which tests to run.
   Never poll `forge lanes --json` or `forge board --json` and never tail test logs while you wait.
-- Generated client CI on a `windows-*` runner wraps `forge test --change` in PowerShell and
-  retries it once after a failure. The command runs the configured test command with the same
-  shell as a local close on Windows. Use `pwsh -File "<path>"` to run a PowerShell script. A second
-  failure fails the check; Linux and Mac run it once, and the trusted PR gate keeps its command.
+- Generated client CI on a `windows-*` runner wraps `forge test --change` in PowerShell.
+  It runs the configured test command with the same shell as a local close on Windows.
+  Use `pwsh -File "<path>"` to run a PowerShell script. Each platform runs the command once;
+  Forge retries only infrastructure failures. The trusted PR gate keeps its command.
 - When you change text the program prints (messages, pull request text, board lines), include tests
   for that text in the change's related tests and follow the test-place instructions below.
 - Decide and record. If the brief can be read two ways and both readings can be undone, pick the

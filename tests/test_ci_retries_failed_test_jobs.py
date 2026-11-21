@@ -1,4 +1,4 @@
-"""Failed test jobs get one workflow retry at the command boundary.
+"""Infrastructure failures get one job retry; assertions stay red.
 
 Audit: protects close/merge recovery and the shared attempt limit. Existing
 cancelled-run tests never supply failed groups. Only GitHub and time are fake;
@@ -24,8 +24,10 @@ def _group(conclusion, status="completed"):
 
 
 @pytest.mark.parametrize("command", ["close", "merge", "land"])
-@pytest.mark.parametrize("failure", ["failure", "timed_out", "cancelled"])
-@pytest.mark.parametrize("second", ["success", "failure", "timed_out", "cancelled"])
+@pytest.mark.parametrize("failure,second", [
+    (failure, second) for failure in ("timed_out", "cancelled", "runner-loss")
+    for second in ("success", "failure", "timed_out", "cancelled")
+] + [("failure", "failure"), ("mixed", "failure")])
 def test_1_failed_test_jobs_retry_once_and_wait(clock, monkeypatch, command, failure, second):
     monkeypatch.setenv("FORGE_CHECKS_WAIT", "600")
     _agent(clock)
@@ -47,26 +49,44 @@ def test_1_failed_test_jobs_retry_once_and_wait(clock, monkeypatch, command, fai
         clock.checks(GREEN)
         closed = clock.repo.forge("close", ITEM)
         assert closed.returncode == 0, closed.stdout + closed.stderr
-    failed = [_group(failure),
+    clock.gh.respond("run", "view", stdout='{"attempt": 2}')
+    conclusion = "failure" if failure in ("runner-loss", "mixed") else failure
+    clock.gh.respond("run", "view", "77", "--json", "jobs", stdout=json.dumps({"jobs": [
+        {"name": "test group 1 of 2", "conclusion": conclusion, "databaseId": 701},
+        {"name": "tests", "conclusion": "failure", "databaseId": 702},
+    ]}))
+    clock.gh.respond("run", "view", "77", "--job", "701", "--log-failed", stdout=(
+        "The runner has lost communication with the server." if failure == "runner-loss"
+        else "The runner has lost communication with the server.\nAssertionError: assert 1 == 2" if failure == "mixed"
+        else "FAILED tests/test_app.py::test_total - AssertionError: assert 1 == 2"))
+    failed = [_group(conclusion),
               _check("test group 2 of 2", "success"), _check("tests", "failure"), OTHER]
     retrying = [_group(None, "in_progress"), _check("test group 2 of 2", "success"),
                 _check("tests", "failure"), OTHER]
     final = GREEN if second == "success" else [
         _group(second), _check("tests", "failure"), OTHER]
     looks = [failed, retrying]
-    workflows = [_workflow(5, 77, failure), _workflow(5, 77, None, "in_progress", attempt=2)]
+    workflows = [_workflow(5, 77, conclusion), _workflow(5, 77, None, "in_progress", attempt=2)]
     if second == "success":
         # The group completes before its dependent tests aggregate replaces its old failure.
         looks.append([_group("success"), _check("test group 2 of 2", "success"),
                       _check("tests", "failure"), OTHER])
         workflows.append(_workflow(5, 77, None, "in_progress", attempt=2))
-    _queue(clock, RUNS, *_runs(*looks, final))
-    _queue(clock, RUN_LIST, *workflows, _workflow(5, 77, second, attempt=2))
+    if failure in ("failure", "mixed"):
+        _queue(clock, RUNS, *_runs(failed))
+        _queue(clock, RUN_LIST, _workflow(5, 77, "failure"))
+    else:
+        _queue(clock, RUNS, *_runs(*looks, final))
+        _queue(clock, RUN_LIST, *workflows, _workflow(5, 77, second, attempt=2))
     clock.gh.respond("run", "rerun")
-    clock.gh.respond("run", "view", stdout='{"attempt": 2}')
 
     done = clock.repo.forge(command, ITEM)
 
+    if failure in ("failure", "mixed"):
+        assert not clock.gh_calls("run", "rerun"), done.stdout + done.stderr
+        assert done.returncode == 1, done.stdout + done.stderr
+        assert "Started the failed test jobs again once" not in done.stdout
+        return
     assert clock.gh_calls("run", "rerun") == [["run", "rerun", "77", "--failed"]], done.stdout + done.stderr
     assert "Started the failed test jobs again once; waiting for them." in done.stdout
     if second == "success":

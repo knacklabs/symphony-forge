@@ -88,7 +88,7 @@ def _one_of_two_names_a_changed_file(env):
 
 def _two_jobs_one_run(env):
     _red_then_green(env)
-    _failing(env, ("tests (ubuntu-latest)", LINK.format(9), "ConnectionResetError\n"),
+    _failing(env, ("tests (ubuntu-latest)", LINK.format(9), "The runner has lost communication with the server\n"),
              ("tests (windows-latest)", LINK.format(10), "The runner was shut down\n"))
     done = _land(env)
     assert done.returncode == 0, done.stdout + done.stderr
@@ -136,7 +136,7 @@ def _renamed_old_path(env):
 
 def _rerun_refused(env):
     _red_then_green(env)
-    _failing(env, ("tests", LINK.format(9), "ConnectionResetError\n"))
+    _failing(env, ("tests", LINK.format(9), "The runner has lost communication with the server\n"))
     env.gh.respond("run", "rerun", stderr="HTTP 403: Resource not accessible by integration\n", exit=1)
     done = _land(env)
     assert done.returncode == 0, done.stdout + done.stderr
@@ -150,7 +150,7 @@ def _fails_again(env):
     _agent(env, PASSING)
     _fix(env, "working", worked=True)
     _queue(env, RUNS, *_runs(RED, RED, GREEN))
-    _failing(env, ("tests", LINK.format(9), "ConnectionResetError\n"))
+    _failing(env, ("tests", LINK.format(9), "The runner has lost communication with the server\n"))
     done = _land(env)
     assert done.returncode == 0, done.stdout + done.stderr
     assert _steps(done) == [f"Closing {ITEM}.", RERUN.format("tests"), f"Closing {ITEM}.", FIX_ROUND,
@@ -163,7 +163,7 @@ def _attempt_never_rises(env):
     _agent(env, PASSING)
     _fix(env, "working", worked=True)
     _queue(env, RUNS, *_runs(RED, RED, GREEN))
-    _failing(env, ("tests", LINK.format(9), "ConnectionResetError\n"), attempts=('{"attempt": 1}',))
+    _failing(env, ("tests", LINK.format(9), "The runner has lost communication with the server\n"), attempts=('{"attempt": 1}',))
     stopped = _land(env)
     assert stopped.returncode == 1
     assert _steps(stopped) == [f"Closing {ITEM}.", RERUN.format("tests"), f"Stopped: {ITEM} needs you."]
@@ -174,7 +174,7 @@ def _attempt_never_rises(env):
     assert len(_reruns(env)) == 1
 
 
-FOUR = [_unrelated_rerun_once, "src/app.py", "src\\app.py",
+FOUR = [_unrelated_rerun_once, "src/app.py", "src\\app.py", "tests/unchanged.py",
         _already_second_attempt, _one_of_two_names_a_changed_file, _two_jobs_one_run,
         _status_without_a_job, _attempt_unreadable, _log_unreadable, _non_ascii_name,
         _renamed_old_path, _rerun_refused, _fails_again, _attempt_never_rises]

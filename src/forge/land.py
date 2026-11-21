@@ -250,6 +250,8 @@ def _rerun(top: Path, item: str, branch: str) -> bool:
     logs = _failed_logs(top, branch)
     if not logs or any(_attempt(top, run) != 1 for run in logs):
         return False
+    if not all(_infrastructure(text) for texts in logs.values() for text in texts):
+        return False
     changed = [path for path in repo.git("diff", "--name-only", "-z", "--no-renames",
                                          f"origin/{default}...HEAD", cwd=top).split("\0") if path]
     if _names(logs, changed):
@@ -263,7 +265,7 @@ def _rerun(top: Path, item: str, branch: str) -> bool:
         for name in names:
             say(f"Re-running {name} once: its failure names none of this change's files and "
                 "CI runs this repo's tests.")
-    late = _restart(top, list(runs))
+    late = _restart(top, list(runs), logs)
     if late == "gh":
         return False
     if late:
@@ -315,9 +317,42 @@ def _names(logs: dict[str, list[str]], paths) -> bool:
                for texts in logs.values() for text in texts for path in paths)
 
 
-def _restart(top: Path, runs: list[str]) -> str:
+def _infrastructure(text: str) -> bool:
+    return bool(re.search(
+        r"The runner has lost communication with the server|The hosted runner.*lost communication|"
+        r"the runner lost its network|The job(?: running on runner .*)? exceeded the maximum execution time|"
+        r"The runner.*(?:shutdown|shut down)|Failed: Timeout \(>[^\s]+s\) from pytest-timeout\.",
+        text, re.I)) and not re.search(
+            r"AssertionError|Error: expect|FAILED [^\n]+ - (?!Failed: Timeout)", text)
+
+
+def _restart(top: Path, runs: list[str], logs: dict[str, list[str]] | None = None) -> str:
     """Run the failed jobs of each run again and wait for their second attempt. "" when they started,
     "gh" when GitHub refused, else the run that had not started in time."""
+    # All automatic job retries meet here, including combined-check recovery.
+    # A red test or a log that names no changed file is not infrastructure evidence.
+    for run in runs:
+        if logs is not None:
+            if not logs.get(run) or not all(_infrastructure(text) for text in logs[run]):
+                return "gh"
+            continue
+        shown = repo.run("gh", "run", "view", run, "--json", "jobs", cwd=top)
+        try:
+            jobs = json.loads(shown.stdout)["jobs"] if not shown.returncode else []
+        except (ValueError, KeyError, TypeError):
+            jobs = []
+        failed = [job for job in jobs if job.get("conclusion") in
+                  ("failure", "cancelled", "timed_out", "startup_failure")]
+        groups = any(re.fullmatch(r"test group \d+ of \d+", job.get("name", "")) for job in failed)
+        if not failed:
+            return "gh"
+        for job in failed:
+            if job.get("conclusion") != "failure" or groups and job.get("name") == "tests":
+                continue  # The generated aggregate mirrors its failed test groups.
+            log = repo.run("gh", "run", "view", run, "--job", str(job.get("databaseId", "")),
+                           "--log-failed", cwd=top)
+            if log.returncode or not _infrastructure(log.stdout):
+                return "gh"
     for run in runs:
         if repo.run("gh", "run", "rerun", run, "--failed", cwd=top).returncode:
             return "gh"
@@ -723,8 +758,10 @@ def _red(top: Path, members: list, branch: str, tip: str, reran: bool, leave: bo
         return "leave", named[0]
     if named:
         return "alone", f"the combined check failed in files of {', '.join(named[:-1])}{' and ' if named[1:] else ''}{named[-1]}"
+    if _restart(top, list(logs), logs):
+        return "alone", "Forge could not run the failed jobs again"
     say("Train: the combined check failed in no change's files. Forge runs the failed jobs again once.")
-    return ("alone", "Forge could not run the failed jobs again") if _restart(top, list(logs)) else ("rerun", "")
+    return "rerun", ""
 
 
 def _settled(top: Path, branch: str, own: set[int]) -> bool:

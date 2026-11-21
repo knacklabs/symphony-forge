@@ -1,4 +1,9 @@
-"""Close retries failing files once, without replaying passing files."""
+"""Close retries timeouts once and leaves assertion failures red.
+
+Audit: real pytest execution proves the decision and file scope. Old cases
+required assertion retries; that is the regression. Timeout cases retain the
+one-attempt limit without a production-only seam.
+"""
 import json
 import shutil
 import sys
@@ -12,14 +17,18 @@ from test_close import env  # noqa: F401
 STORY = "close-reruns-failed-tests-once"
 
 
-@pytest.mark.parametrize("adopted,persistent,mode", [
-    (False, False, "direct"), (False, True, "direct"),
-    (False, False, "chain"), (False, True, "chain"),
-    (False, False, "picker"), (False, True, "picker"),
+@pytest.mark.parametrize("adopted,persistent,mode,failure", [
+    (False, False, "direct", "assertion"), (False, True, "direct", "assertion"),
+    (False, False, "chain", "assertion"), (False, True, "chain", "assertion"),
+    (False, False, "picker", "assertion"), (False, True, "picker", "assertion"),
+    pytest.param(False, False, "direct", "timeout", marks=pytest.mark.skipif(
+        sys.platform == "win32", reason="pytest-timeout signal recovery needs POSIX")),
+    pytest.param(False, True, "direct", "timeout", marks=pytest.mark.skipif(
+        sys.platform == "win32", reason="pytest-timeout signal recovery needs POSIX")),
 ], ids=["new-client-flaky", "new-client-red",
         "chain-green", "chain-red-integration",
-        "picker-always-green", "picker-always-red"])
-def test_1_close_retries_only_failed_files_once(env, adopted, persistent, mode):
+        "picker-always-green", "picker-always-red", "timeout-recovers", "timeout-stays-red"])
+def test_1_close_retries_only_failed_files_once(env, adopted, persistent, mode, failure):
     # Audit: protects close's observable retry scope, limit and decision. An order-dependent
     # client test reproduces the lost round; existing close tests have no recovering failure.
     # Chain cases guard a later invocation's scope and previously unexecuted tests. Picker
@@ -54,6 +63,13 @@ def test_1_close_retries_only_failed_files_once(env, adopted, persistent, mode):
         + "        log.write('fail\\n')\n    assert "
         + ("False" if persistent and mode != "chain" else "'CLIENT_ORDER_BUG' not in os.environ") + "\n",
     }
+    if failure == "timeout":
+        files["client tests/test_b.py"] = (
+            "import pytest, threading\nfrom pathlib import Path\n"
+            "@pytest.mark.timeout(0.2, method='signal')\ndef test_order():\n" + record
+            + "        log.write('fail\\n')\n"
+            + f"    if {persistent!r} or Path({json.dumps(log.as_posix())}).read_text('utf-8').count('fail\\n') == 1:\n"
+            + "        threading.Event().wait()\n")
     if mode == "chain":
         files["integration tests/test_integration.py"] = "def test_integration():\n" + record \
             + "        log.write('integration\\n')\n    assert " + str(not persistent) + "\n"
@@ -66,12 +82,15 @@ def test_1_close_retries_only_failed_files_once(env, adopted, persistent, mode):
     repo.git("push", "-q", "origin", "main")
     item, _ = env.start_fix(files)
     closed = env.close(item)
-    expected = (["pass", "fail", "always", "fail"] if mode == "picker" else
-                ["pass", "pass", "fail", "fail", "integration"] if mode == "chain" else
-                ["pass", "fail", "fail"])
+    expected = (["pass", "fail", "always"] if mode == "picker" else
+                ["pass", "pass", "fail"] if mode == "chain" else
+                ["pass", "fail"])
+    if failure == "timeout":
+        expected.append("fail")
     assert log.read_text("utf-8").splitlines() == expected, closed.stdout + closed.stderr
-    assert (closed.returncode != 0) == persistent, closed.stdout + closed.stderr
-    assert ("Ready:" in closed.stdout) == (not persistent)
-    assert ("Flaky test files:" in closed.stdout) == (not persistent)
+    recovered = failure == "timeout" and not persistent
+    assert (closed.returncode == 0) == recovered, closed.stdout + closed.stderr
+    assert ("Ready:" in closed.stdout) == recovered
+    assert ("Flaky test files:" in closed.stdout) == recovered
     assert "client tests/test_b.py" in closed.stdout
     assert len(env.review_calls()) == 1

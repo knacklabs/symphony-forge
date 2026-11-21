@@ -673,7 +673,7 @@ def test_4_a_failure_naming_no_change_runs_again_once(train, monkeypatch, reques
         pytest.skip("new repos only")
     heads = _ready(env, monkeypatch, ("aa", "bb", "cc"))
     logs = {"flake": "ConnectionResetError: the runner lost its network\n",
-            "timeout": "The job exceeded the maximum execution time\n", "still-red": "Process exited with code 1\n",
+            "timeout": "The job exceeded the maximum execution time\n", "still-red": "The runner was shut down\n",
             "several": _failed_log("aa.py", "bb.py")}[variant]
     # A healed re-run still runs at first. A re-run that fails again has a second group still running. In
     # the fallbacks, main has moved, so each change closes anew on a new head whose tests run at first;

@@ -1,7 +1,7 @@
-"""A fixture change keeps the CI group's passing files out of a retry.
+"""A fixture change keeps assertion failures red and recovers a lost worker.
 
 Test audit: This protects retry scope through the real grouped --change picker.
-Xdist can rebuild the original group instead of the failed-file selection.
+Xdist can lose unfinished tests when only failed files replay after process loss.
 The full-run regression bypasses this nested picker and serial picker cases do
 not exercise xdist. Real pytest, split and xdist run here; no production seam.
 The existing full-run test retains the earlier-adopted client witness.
@@ -10,13 +10,16 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
+
 STORY = "tests-copy-seed-repo"
 
 
+@pytest.mark.parametrize("failure", ["assertion", "timeout", "runner-loss"])
 def test_2_grouped_change_run_retries_only_failed_files_after_fixture_change(
-        repo, tmp_path, monkeypatch):
+        repo, tmp_path, monkeypatch, failure):
     command = (f'"{Path(sys.executable).as_posix()}" -m pytest "client tests" -q '
-               '-n 2 --dist loadfile --splits {groups} --group {group}')
+               '-n 2 --dist loadfile --max-worker-restart=0 --splits {groups} --group {group}')
     version = repo.forge("--version").stdout.split()[-1]
     repo.write("forge.toml", f'version = "{version}"\nrepo = "forge-source"\n'
                'checks = ["tests"]\nfast_test = "forge test --pytest {base}"\n'
@@ -32,7 +35,14 @@ def test_2_grouped_change_run_retries_only_failed_files_after_fixture_change(
                        "    with receipt.open('a', encoding='utf-8') as log:\n"
                        f"        log.write({json.dumps(test + chr(10))})\n")
             if test == "failed":
-                source += "    assert earlier, 'transient failure on the first attempt'\n"
+                source += ("    assert earlier, 'transient failure on the first attempt'\n"
+                           if failure == "assertion" else
+                           "    if not earlier:\n        import threading\n        threading.Event().wait()\n"
+                           if failure == "timeout" else
+                           "    if not earlier:\n        import os\n        os._exit(1)\n")
+                if failure == "timeout":
+                    source = "import pytest\n" + source.replace(
+                        "def test_failed():", "@pytest.mark.timeout(0.2, method='signal')\ndef test_failed():")
         repo.write(f"client tests/test_{name}.py", source)
     repo.git("add", "-A")
     repo.git("commit", "-qm", "Configure grouped change tests")
@@ -48,9 +58,10 @@ def test_2_grouped_change_run_retries_only_failed_files_after_fixture_change(
 
     changed = repo.forge("test", "--change")
 
-    assert changed.returncode == 0, changed.stdout + changed.stderr
-    assert (tmp_path / "a.log").read_text("utf-8").splitlines() == ["pass"]
-    assert (tmp_path / "b.log").read_text("utf-8").splitlines() == ["failed", "sibling"] * 2
+    interrupted = failure == "runner-loss" or failure == "timeout" and sys.platform == "win32"
+    assert (changed.returncode == 0) == (failure != "assertion"), changed.stdout + changed.stderr
+    assert (tmp_path / "a.log").read_text("utf-8").splitlines() == ["pass"] * (2 if interrupted else 1)
+    assert (tmp_path / "b.log").read_text("utf-8").splitlines().count("failed") == (1 if failure == "assertion" else 2)
     assert not (tmp_path / "c.log").exists()
     assert not (tmp_path / "d.log").exists()
-    assert "Flaky test files:" in changed.stdout
+    assert ("Flaky test files:" in changed.stdout) == (failure != "assertion")
