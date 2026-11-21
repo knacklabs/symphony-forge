@@ -1,6 +1,17 @@
 {
   "items": [
     {
+      "key": "bug\tsrc/forge/checks.py\tAvoid waiting for checks before opening the first pull request\trecords-cancel-ci",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 224,
+      "text": "Avoid waiting for checks before opening the first pull request",
+      "from": "blocking",
+      "item": "records-cancel-ci",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/checks.py\tNot done: Flush saved records on early exits with unpushed code\trecords-cancel-ci",
       "kind": "bug",
       "path": "src/forge/checks.py",
@@ -94,6 +105,17 @@
       "path": "src/forge/templates/review-tests.py",
       "line": 214,
       "text": "Gate: Update the shipped instructions for failed parent runs",
+      "from": "blocking",
+      "item": "records-cancel-ci",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/review-tests.py\tNot done: Honor both parents of a record-only merge\trecords-cancel-ci",
+      "kind": "bug",
+      "path": "src/forge/templates/review-tests.py",
+      "line": 153,
+      "text": "Not done: Honor both parents of a record-only merge",
       "from": "blocking",
       "item": "records-cancel-ci",
       "status": "open",
