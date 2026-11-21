@@ -20,7 +20,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
-from forge.close_remote import push_replay, reconcile, replay_baseline, save_replay
+from forge.close_remote import push_replay, reconcile, replay_baseline, save_replay, squash_replay
 from forge import __version__, app_baseline, checks, codex, design, githooks, init, merge_review, merge_timings, migration_warnings, repo, review, review_skip, score, spotted, story, sync, task, time_records
 
 REFUSALS = {
@@ -79,11 +79,15 @@ WHY, DONE = "Let the agent merge this repo's ready pull requests.", 'The default
 
 
 def close(args: argparse.Namespace) -> int:
+    top = _worktree(args.item)
+    return checks.publish_on_exit(top, lambda: _close(args, top))
+
+
+def _close(args: argparse.Namespace, top: Path) -> int:
     from forge import backfill, records
     from forge.merge import ENABLE
 
     item = args.item
-    top = _worktree(item)
     state, cfg = repo.read_state(item, top) or {}, repo.config(top)
     skip = review_skip.requested(args, top, item, state)
     retried_history = (repo.forge_dir(top) / "backfill-pending").exists()
@@ -153,9 +157,9 @@ def close(args: argparse.Namespace) -> int:
             _save(top, item, state, f"Record the human's review loop choice: {choice}")
             if not defaulted:
                 repo.record_event(top, item, "owner wait end", wait_id=state["stop"].get("wait_id"))
-                if choice != "accept":  # acceptance publishes after the final review records
-                    _push(top, repo.current_branch(top))  # every machine's board sees the wait end
-                    _refresh_record(top, item, state)
+            if choice != "accept":  # acceptance publishes after the final review records
+                checks.push_after_checks(top, repo.current_branch(top))  # every machine's board sees the wait end
+                _refresh_record(top, item, state)
         if choice in ("switch", "same", "more"):
             print(f"Recorded the human's choice.\nNext: forge work {item}")
             return 0
@@ -204,7 +208,7 @@ def close(args: argparse.Namespace) -> int:
         if error.entry in (REFUSALS["conflict"], REFUSALS["replay_conflict"]):
             if not time_records.pending_merge_wait(top, item, (pr or {}).get("body") or "", reason="merge conflict"):
                 repo.record_event(top, item, "owner wait start", reason="merge conflict")
-            _push(top, branch)
+            checks.push_after_checks(top, branch)
             if pr:  # keep its review block; only the shared time record changes
                 _refresh_record(top, item, state, pr)
             else:
@@ -435,8 +439,7 @@ def close(args: argparse.Namespace) -> int:
         _save(top, item, state, message, *noted)
     elif noted:  # a reused clean review still records what the worker spotted
         _save(top, item, state, f"Review of {item}: {result['status']}", *noted)
-    checks.after_code_ci(top, item, branch, cfg, serious, getattr(args, "check_slot", None))
-    _push(top, branch, reviewed=True)
+    checks.push_after_checks(top, branch, reviewed=True, slot=getattr(args, "check_slot", None))
     head = repo.git("rev-parse", "HEAD", cwd=top)
     pr = _publish(top, item, state, branch, pr_target, pr, result, evidence)
     _attach(top, item, branch)
@@ -638,7 +641,7 @@ def share_wait(top: Path, item: str, state: dict[str, Any], push: bool = False) 
     sees the wait."""
     if pr := branch_pr(top, state):
         if push:
-            _push(top, state.get("branch") or repo.current_branch(top))
+            checks.push_after_checks(top, state.get("branch") or repo.current_branch(top))
         _refresh_record(top, item, state, pr)
 
 
@@ -724,12 +727,13 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
                         "--no-update-refs", "--onto", target, baseline, cwd=top)
         if done.returncode and not merge_timings.resolve(
                 top, replay=True, ours=":3", incoming=":2"):
-            files = repo.git("diff", "--name-only", "--diff-filter=U", cwd=top).splitlines() or files
+            conflicts = repo.git("diff", "--name-only", "--diff-filter=U", cwd=top).splitlines()
             repo.run("git", "rebase", "--abort", cwd=top)
-            if not files:
+            if not conflicts:
                 done.check_returncode()
-            repo.refuse(REFUSALS["replay_conflict"], default=default, files=", ".join(files),
-                        item=item)
+            # The final merge is clean even though an intermediate commit clashes.
+            replayed = squash_replay(top, baseline, original, target, tree)
+            repo.git("reset", "--keep", replayed, cwd=top)
         if repo.git("rev-parse", "HEAD^{tree}", cwd=top) != tree:
             evidence = (review.commit_paragraph(top, baseline, "Functional check:", original) or
                         review.commit_paragraph(top, baseline, "Proof list:", original))
@@ -741,7 +745,7 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
         sync.refresh_merged_guides(top, original)
         save_replay(top, branch, original, lease)
         if publish:
-            _push(top, branch)
+            checks.push_after_checks(top, branch)
         return
     if (trial.returncode == 0 and (pr or {}).get("mergeable") != "CONFLICTING"
             and (pr or {}).get("mergeStateStatus") != "BEHIND"):
@@ -855,7 +859,7 @@ def synced_changes(top: Path) -> list[str]:
     return [entry[3:] for entry in status.split("\0") if entry and not entry.startswith(f"?? {hooks}")]
 
 
-def _push(top: Path, branch: str, *, reviewed: bool = False) -> None:
+def _push_ready(top: Path, branch: str, *, reviewed: bool = False) -> None:
     """Merge rejected remote history; retry other push failures after 1, 2 and 4 seconds."""
     tags = repo.git("for-each-ref", "--format=%(refname)", "--merged", branch,
                     "refs/tags/forge-start/", cwd=top).splitlines()
@@ -876,7 +880,7 @@ def _push(top: Path, branch: str, *, reviewed: bool = False) -> None:
                     item = (review.branch_item(branch, top) or (branch, {}))[0]
                     repo.refuse(("Remote work arrived after the review.", "forge close {item}"), item=item)
                 reconcile(top, branch)
-                repo.git("push", "-q", "--atomic", "-u", "origin", branch, *tags, cwd=top)
+                checks.push_after_checks(top, branch)  # Recheck the newly fetched head before publishing records.
                 return
             if wait is None:
                 raise

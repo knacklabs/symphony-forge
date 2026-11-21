@@ -11,7 +11,6 @@ import pytest
 
 from test_close import GREEN, env, run  # noqa: F401
 from test_land import BRANCH, ITEM, RUNS, _agent, _fix, _queue, _runs, land  # noqa: F401
-from test_merge_waits_while_default_is_red import DEFAULT_TESTS, _ci_run, _default_ci_result, _queue_gh
 from test_queue_land_all import client  # noqa: F401
 from test_train_land_all import _all, _ready, _stub, train  # noqa: F401
 
@@ -20,7 +19,7 @@ pytestmark = pytest.mark.platform
 
 
 @pytest.mark.parametrize("path,interval", [
-    (path, interval) for path in ("close", "merge", "merge-default", "land", "pre-push")
+    (path, interval) for path in ("close", "merge", "land", "pre-push")
     for interval in (None, "2.5")
 ] + [("pre-push-deadline", "300")])
 def test_1_ci_polls_at_the_configured_interval(land, fake_clock, monkeypatch, tmp_path, path, interval):
@@ -48,15 +47,10 @@ def test_1_ci_polls_at_the_configured_interval(land, fake_clock, monkeypatch, tm
     if path.startswith("merge"):
         closed = env.repo.forge("close", ITEM)
         assert closed.returncode == 0, closed.stdout + closed.stderr
-    if path == "merge-default":
-        default = env.repo.git("rev-parse", "origin/main")
-        first = _default_ci_result(env, default, [
-            _ci_run(default, "completed", "failure", "2026-11-19T00:00:00Z")])
-        second = _default_ci_result(env, default, [
-            _ci_run(default, "completed", "success", "2026-11-19T00:01:00Z")])
-        _queue_gh(env, DEFAULT_TESTS, [first, second])
     if pre_push:
         env.repo.git("push", "-q", "-u", "origin", BRANCH, cwd=where)
+        # The running pull-request check below needs an existing pull request.
+        env.open_pr("")
         parent = env.repo.git("rev-parse", "HEAD", cwd=where)
         # Measure what close waited BEFORE publishing its review record. Reading
         # green only after the push would pass an ordering-only interval test.
@@ -67,7 +61,7 @@ def test_1_ci_polls_at_the_configured_interval(land, fake_clock, monkeypatch, tm
                         + f'"{(tmp_path / "push-elapsed").as_posix()}"\n', encoding="utf-8")
         hook.chmod(0o755)
     running = [run("tests", None, "in_progress"), run("forge-pr-check")]
-    _queue(env, RUNS, *_runs(*([GREEN] if path == "merge-default" else [running, GREEN])))
+    _queue(env, RUNS, *_runs(running, GREEN))
     elapsed = tmp_path / "clock" / "elapsed"
     before = float(elapsed.read_text("utf-8"))
 

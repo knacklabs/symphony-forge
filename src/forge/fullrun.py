@@ -1,4 +1,4 @@
-"""Full tests on the latest default-branch commit, with GitHub as the result's one home."""
+"""Full tests for main commits, with GitHub as the result's one home."""
 import json
 import os
 import re
@@ -77,9 +77,11 @@ def run(top: Path) -> int:
     if not command:
         print("The full run ran no tests. Set test in forge.toml to run the whole suite.")
         return 1
-    sha = latest(top)
     default = repo.default_branch(top)
-    if repo.git("rev-parse", "HEAD", cwd=top) != sha:
+    scheduled = (os.environ.get("GITHUB_EVENT_NAME") == "schedule"
+                 and bool(os.environ.get("GITHUB_RUN_ID")) and "FORGE_GROUP" in os.environ)
+    sha = repo.git("rev-parse", "HEAD", cwd=top) if scheduled else latest(top)
+    if not scheduled and repo.git("rev-parse", "HEAD", cwd=top) != sha:
         raise repo.Refused(
             f"The full run must use the latest commit on {default}. Next: "
             f"git switch {default} && git pull, then forge test --full.", "")

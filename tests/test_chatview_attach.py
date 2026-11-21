@@ -39,6 +39,8 @@ def _closable(repo, gh, monkeypatch, tmp_path, sdk_data, client=False):
     lines = "".join(json.dumps(row) + "\n" for row in GREEN)
     gh.respond("api", "--paginate", "--jq", ".check_runs[]", stdout=lines)
     gh.respond("api", "--paginate", "--jq", ".statuses[]", stdout="")
+    gh.respond("api", "--paginate", "--jq", ".workflow_runs[]", stdout="")
+    gh.respond("api", "--jq", ".workflow_runs[]", stdout="")
     gh.respond("pr", "list", stdout=json.dumps(
         [{"number": 12, "state": "OPEN", "body": "", "isDraft": False}]))
     gh.respond("pr", "edit")

@@ -65,6 +65,8 @@ jobs:
       docs-only: ${{ steps.docs.outputs.docs-only }}
       docs-tests: ${{ steps.docs.outputs.docs-tests }}
       one-group: ${{ steps.docs.outputs.one-group }}
+      reuse: ${{ steps.docs.outputs.reuse }}
+      parent-conclusion: ${{ steps.docs.outputs.parent-conclusion }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -72,17 +74,18 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
+      - uses: astral-sh/setup-uv@v6
       - id: docs
         env:
           GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           DOCS_ONLY_EXCLUDES: '<docs-excludes>'
-        run: python .forge/review-tests.py
+        run: <select-command>
 
   tests:
     needs: docs-check
-    if: always() && (github.event_name == 'push' || (github.event_name == 'pull_request' && needs.docs-check.result == 'success' && needs.docs-check.outputs.docs-only != 'true'))
+    if: always() && github.event_name == 'pull_request' && needs.docs-check.result == 'success' && needs.docs-check.outputs.docs-only != 'true'
     name: test group ${{ matrix.group }} of ${{ needs.docs-check.outputs.one-group == 'true' && 1 || <groups> }}
     strategy:
       fail-fast: false
@@ -93,7 +96,6 @@ jobs:
       UV_FROZEN: '1'
       FORGE_GROUP: ${{ matrix.group }}
       FORGE_GROUPS: ${{ needs.docs-check.outputs.one-group == 'true' && '1' || '<groups>' }}
-      FORGE_PUSH_BASE: ${{ github.event_name == 'push' && github.event.before || '' }}
 <containers><tests-timeout>    steps:
       - uses: actions/checkout@v7
         with:
@@ -107,9 +109,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-          BASE_SHA: ${{ github.event_name == 'push' && github.event.before || github.event.pull_request.base.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
           DOCS_ONLY_EXCLUDES: '<docs-excludes>'
+          PR_REUSE: ${{ needs.docs-check.outputs.reuse }}
+          PR_PARENT_CONCLUSION: ${{ needs.docs-check.outputs.parent-conclusion }}
         run: python .forge/review-tests.py
+      - if: steps.parent-tests.outputs.parent-conclusion == 'failure'
+        run: exit 1
 <npm-cache><node><test-install>      - run: <test>
         if: steps.parent-tests.outputs.reuse != 'true'
 
@@ -119,14 +125,14 @@ jobs:
     # job would otherwise pass a required check of the same name; always() keeps a failed
     # group from skipping this one.
     needs: [docs-check, tests]
-    if: always() && (github.event_name == 'pull_request' || github.event_name == 'push')
+    if: always() && github.event_name == 'pull_request'
     name: ${{ github.event_name == 'pull_request_target' && 'tests (other event)' || 'tests' }}
     runs-on: <runner>
     steps:
 <group-warning>      - env:
           TEST_GROUP_RESULT: ${{ needs.tests.result }}
-          DOCS_CHECK: ${{ github.event_name == 'push' && 'success' || needs.docs-check.result }}
-          DOCS_ONLY: ${{ github.event_name == 'push' && 'false' || needs.docs-check.outputs.docs-only }}
+          DOCS_CHECK: ${{ needs.docs-check.result }}
+          DOCS_ONLY: ${{ needs.docs-check.outputs.docs-only }}
         shell: bash
         run: test "$DOCS_CHECK" = success && { test "$TEST_GROUP_RESULT" = success || { test "$DOCS_ONLY" = true && test "$TEST_GROUP_RESULT" = skipped; }; }
       - if: needs.docs-check.outputs.docs-only == 'true'
@@ -329,10 +335,7 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                      "            ~/AppData/Local/pnpm/store\n"
                      "          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}\n")
     full_npm_cache = npm_cache.replace("        if: steps.parent-tests.outputs.reuse != 'true'\n", "")
-    full_triggers = ("  push:\n    branches: [" + json.dumps(repo.default_branch(top)) + "]\n"
-                     if ci_tests else "")
-    if full_run:
-        full_triggers += "  schedule:\n    - cron: '0 3 * * *'\n  workflow_dispatch:\n"
+    full_triggers = "  schedule:\n    - cron: '0 3 * * *'\n  workflow_dispatch:\n" if full_run else ""
     full_suite = ("\n  full-suite:\n"
                   "    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'\n"
                   "    name: Full test suite\n"
@@ -406,7 +409,7 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
         full_suite = full_suite.replace("    steps:\n", "    steps:\n      - run: " + json.dumps(
             'echo "::warning::' + full_warning + '"') + "\n", 1)
     template = WORKFLOW
-    if ("{groups}" not in change_command
+    if (("{groups}" not in change_command and not repo.pytest_split(top, change_command))
             or re.search(r"(?:\{group\}|--shard=\d+)/\d+",
                          (cfg.get("fast_test") or "") + "\n" + cfg["test"])):
         # A fixed shard count must keep every shard, even for a small change.
@@ -419,12 +422,14 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
         end = template.index("  tests-passed:\n", runner)
         gate = template.index("  forge-pr-check:\n", end)
         single = ("  tests:\n"
-                  "    if: github.event_name == 'pull_request' || github.event_name == 'push'\n"
+                  "    if: github.event_name == 'pull_request'\n"
                   "    name: ${{ github.event_name == 'pull_request_target' && 'tests (other event)' || 'tests' }}\n"
                   + template[runner:end])
         single = single.replace("${{ matrix.group }}", "'1'").replace(
             "${{ needs.docs-check.outputs.one-group == 'true' && '1' || '<groups>' }}", "'1'")
         single = single.replace("    steps:\n", "    steps:\n<group-warning>", 1)
+        for output in ("reuse", "parent-conclusion"):
+            single = single.replace("${{ needs.docs-check.outputs." + output + " }}", "''")
         template = template[:start] + single + template[gate:]
     elif test_runner != regular_runner:
         regular_label, tests_label = ("'" + label.replace("'", "''") + "'" for label in
@@ -477,6 +482,9 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                 .replace("<full-install>", "uv tool install ." if source
                          else sync.install_line(cfg["version"]))
                 .replace("<test-install>", test_install)
+                .replace("<select-command>", "uv run --no-project --with " + (
+                    "." if source else sync.install_line(cfg["version"]).removeprefix("uv tool install "))
+                    + " python .forge/review-tests.py || python -I -S .forge/review-tests.py")
                 .replace("<test>", json.dumps(test))
                 .replace("<group-warning>", "      - run: " + json.dumps(
                     'echo "::warning::' + warning + '"') + "\n" if warning else "")

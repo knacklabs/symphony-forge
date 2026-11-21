@@ -1,0 +1,116 @@
+{
+  "base": "4b5a40b0a536e066e1312d59417c63b4ec6b58a1",
+  "branch": "fix/upgrade-dead-runs",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1f77f-720c-7bf2-b183-eb13947ad177",
+    "head": null,
+    "start": "9f6eb4c8918a0b5eee68f345e93557f09717a3bd"
+  },
+  "done_when": "forge upgrade counts a run as in progress only while its recorded process is still alive (the same process identity the lanes use), so a run whose process is gone no longer blocks the upgrade; a live run still blocks it; new and existing repos get it",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "tests/test_upgrade_ignores_ended_processes.py",
+      "file": "tests/test_upgrade_ignores_ended_processes.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 21,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: live CI waits do not block forge upgrade",
+      "work": 3
+    },
+    {
+      "area": "test_1_upgrade_blocks_only_while_the_recorded_process_is_alive() in tests/test_upgrade_ignores_ended_processes.py",
+      "file": "tests/test_upgrade_ignores_ended_processes.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 73,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: dead-process upgrade regression proof",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "810cd03984cdd86b936d4818ac7ba820a1f23a116714d8ed0d2f749eddee9f96",
+    "changed": "74e836a64c150a355bf4cd10c1214ac93024d39bce047e1d1a060de92bf41445",
+    "commit": "5bccb10ea9ecbdcf78ea4ed4c30d92a1ca8ba053",
+    "dismissals": [],
+    "findings": [],
+    "id": "ca10c2a6-5bf2-4bb6-8438-8c314c8c9341",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-20T05:46:31.133591+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-20T05:48:05.521546+00:00",
+      "round": 1,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T05:54:01.169099+00:00",
+      "round": 2,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T06:15:06.301023+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-20T06:15:49.330035+00:00",
+      "round": 3,
+      "step": "resume"
+    },
+    {
+      "at": "2026-11-20T08:59:32.281591+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-20T08:59:32.369598+00:00",
+      "round": 3,
+      "step": "hold"
+    },
+    {
+      "at": "2026-11-20T09:46:32.479250+00:00",
+      "by": "owner",
+      "choice": "more",
+      "round": 3,
+      "step": "owner decision"
+    },
+    {
+      "at": "2026-11-20T12:29:40.470722+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-20T08:59:32.369598+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "tests/test_upgrade_ignores_ended_processes.py",
+    "reason": "Owner chose one more round on 20 Nov 2026: a live CI wait must block upgrade",
+    "wait_id": "7a8f9354-f6df-49ab-af3e-17a35cbfeac7",
+    "worker_round": 3
+  },
+  "stuck": {
+    "close": "913f0d38-2e3b-402b-b79c-387e2911a141",
+    "head": "5acd0bc21f1a9c85bf84f244696eefe8a533b703",
+    "keys": {},
+    "round": 2
+  },
+  "why": "forge upgrade refuses with 'Forge runs are still in progress' for runs whose process is gone: an intake read that joined its lane but never recorded an end, and a close review killed seconds after it started (lane left with end_known false); a client hit it on 20 Nov 2026 upgrading to v1.2.44 with no forge process running and had to install by hand",
+  "worker": "codex"
+}
