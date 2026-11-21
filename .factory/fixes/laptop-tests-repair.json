@@ -9,6 +9,13 @@
     "start": "523ed204ab16b27b98c53b60b1f44a9da7de467b"
   },
   "done_when": "tests/test_effort_ladder.py and tests/test_board_tests_after_worker.py pass on main with the laptop test step kept, and both files are in .forge/always-tests.txt only if that does not break tests/test_required_repo_rules.py",
+  "drop": {
+    "at": "2026-11-21T04:02:27.455978+00:00",
+    "because": "Owner chose on 21 Nov 2026 to revert the laptop step for v1.2.45 and design it properly for v1.2.46",
+    "by": "vrknetha <vrknetha@gmail.com> 1795233747 +0530",
+    "pull_request": 1741,
+    "status": "waiting for checks"
+  },
   "fix_kind": "mechanical",
   "kind": "fix",
   "known": [],
@@ -23,7 +30,7 @@
     "status": "clean"
   },
   "round": 2,
-  "status": "waiting for checks",
+  "status": "dropped",
   "steps": [
     {
       "at": "2026-11-21T02:17:39.216071+00:00",
@@ -46,6 +53,10 @@
     {
       "at": "2026-11-21T03:40:16.973568+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-21T04:02:27.456127+00:00",
+      "step": "drop"
     }
   ],
   "stuck": {
